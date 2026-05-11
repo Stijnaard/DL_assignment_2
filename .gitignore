@@ -1,2 +1,7 @@
 Final_Project_Data/
 ._Final_Project_Data
+
+.python-version
+main.py 
+pyproject.toml
+README.md
