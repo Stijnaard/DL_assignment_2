@@ -34,6 +34,8 @@ class DataSegment:
     
     @staticmethod
     def _get_metadata(path: str) -> Tuple[str, int, int]:
+        print(f"given path: {path}")
+        
         task, subject_id, segment = path.split("_")
         
         segment, _ = segment.split(".")
