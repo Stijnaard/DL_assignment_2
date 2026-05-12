@@ -35,15 +35,28 @@ class DataSegment:
     @staticmethod
     def _get_metadata(path: str) -> Tuple[str, int, int]:
         print(f"given path: {path}")
+        file_name_without_extension: str = path.split("/")[-1].replace(".h5", "")
         
-        task, subject_id, segment = path.split("_")
-        
-        segment, _ = segment.split(".")
-        task = task.split("/")[-1]
+        task: str = DataSegment._get_task_from_fileName(file_name_without_extension)
+        segment = file_name_without_extension.split("_")[-1]
+        subject_id: int = file_name_without_extension.split("_")[-2]
         
         converted_subject_id: int = int(subject_id)
         converted_segment: int = int(segment)
         return task, converted_subject_id, converted_segment
+    
+    @staticmethod
+    def _get_task_from_fileName(file_name: str) -> str:
+        if file_name.startswith("rest"):
+            return "rest"
+        elif file_name.startswith("task_motor"):
+            return "task_motor"
+        elif file_name.startswith("task_story_math"):
+            return "task_story_math"
+        else:
+            return "task_working_memory"
+
+
 
     def get_data(self) -> ndarray:
         return self.data
