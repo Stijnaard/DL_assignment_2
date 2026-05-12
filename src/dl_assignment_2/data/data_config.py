@@ -1,10 +1,20 @@
+#imports:
+#//>>
 from typing import List
+#//<<
 
+"""
+This config contains all the variables that get used in multiple files.
+Generally, the variables depicted here show the relative paths to certain folders containing data.
+files like dataFolderReader.py rely on the paths depicted by these variables.
+"""
 
+# paths to the folders for the cross-training files:
 CROSS_ROOT: str = "datasets/Cross"
 CROSS_TEST_FOLDERS: List[str] = ["test1", "test2", "test3"]
 CROSS_TRAIN: str = "datasets/Cross/train"
 
+# paths to the folders for the intra-training files:
 INTRA_ROOT: str = "datasets/Intra"
 INTRA_TRAIN: str = 'datasets/Intra/train'
 
