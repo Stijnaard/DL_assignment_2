@@ -31,7 +31,7 @@ class DataFolderReader:
             else:
                 self.id_to_subjectData_map[subject_id].add_segment(segment)
 
-    def get_subjectData_for_subject(self, subject_id: int) -> SubjectData:
+    def get_subjectData(self, subject_id: int) -> SubjectData:
         if subject_id in self.id_to_subjectData_map:
             return self.id_to_subjectData_map[subject_id]
         else:
@@ -46,4 +46,8 @@ class DataFolderReader:
             task_specific_segments.extend(subjectData.get_data_for_task(task))
             
         return task_specific_segments
+    
+    def get_subjects(self) -> List[int]:
+        return list(self.id_to_subjectData_map.keys())
+    
     

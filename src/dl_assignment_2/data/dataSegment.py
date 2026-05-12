@@ -34,8 +34,7 @@ class DataSegment:
     
     @staticmethod
     def _get_metadata(path: str) -> Tuple[str, int, int]:
-        print(f"given path: {path}")
-        file_name_without_extension: str = path.split("/")[-1].replace(".h5", "")
+        file_name_without_extension: str = DataSegment._get_filename_without_extension(path)
         
         task: str = DataSegment._get_task_from_fileName(file_name_without_extension)
         segment = file_name_without_extension.split("_")[-1]
@@ -43,6 +42,7 @@ class DataSegment:
         
         converted_subject_id: int = int(subject_id)
         converted_segment: int = int(segment)
+
         return task, converted_subject_id, converted_segment
     
     @staticmethod
@@ -55,9 +55,14 @@ class DataSegment:
             return "task_story_math"
         else:
             return "task_working_memory"
+        
+    @staticmethod
+    def _get_filename_without_extension(path: str) -> str:
+        file_name: str =path.split("/")[-1]
+        file_name_without_extension: str = file_name.replace(".h5", "")
+        return file_name_without_extension
 
-
-
+    # all the getters:
     def get_data(self) -> ndarray:
         return self.data
     
@@ -69,6 +74,7 @@ class DataSegment:
     
     def get_segment(self) -> int:
         return self.segment
+    
             
 if __name__ == "__main__":
     path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"

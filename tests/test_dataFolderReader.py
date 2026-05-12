@@ -10,7 +10,7 @@ class Test_DataFolderReader:
     
     def test_only_subject_in_get_subjectdata(self):
         subject_id: int = 105923
-        subjectData: SubjectData = self.x.get_subjectData_for_subject(subject_id)
+        subjectData: SubjectData = self.x.get_subjectData(subject_id)
         assert subjectData.get_subject_id() == subject_id
         
     def test_only_task_in_get_task_specific_data(self):
@@ -19,3 +19,7 @@ class Test_DataFolderReader:
         
         assert len(rest_data) == 8
         assert all(task_type == segment.get_task() for segment in rest_data)
+
+    def test_get_correct_subject_id(self):
+        subject_id: int = self.x.get_subjects()[0]
+        assert subject_id == 105923
