@@ -19,18 +19,19 @@ class DataFolderReader:
         The SubjectData object tied to its respective subject ID represents the set of datasets/segments available for that person.
     """
     id_to_subjectData_map: Dict[int, SubjectData] = {}
+    subject_data: List[SubjectData] = []
 
-    def __init__(self, dataset_path: str = INTRA_TRAIN) -> None:
+    def __init__(self, root_folder: str = INTRA_TRAIN) -> None:
         #//>>
         self.id_to_subjectData_map: Dict[int, SubjectData] = {}
 
-        for path in scandir(dataset_path):
-            if not(path.name.endswith(".h5")):
+        for file in scandir(root_folder):
+            if not(file.name.endswith(".h5")):
                 continue
+            
+            print(f"reading file: {file.name}")
+            file_path: str = f"{root_folder}/{file.name}"
 
-            file_path: str = f"{dataset_path}/{path.name}"
-            print("test")
-            print(file_path)
             segment: DataSegment = DataSegment(file_path)
 
             subject_id: int = segment.get_subject_id()
@@ -43,7 +44,8 @@ class DataFolderReader:
 
             else:
                 self.id_to_subjectData_map[subject_id].add_segment(segment)
-
+        
+        self.subject_data = list(self.id_to_subjectData_map.values())
         return None
         #//<<
 
@@ -75,3 +77,6 @@ class DataFolderReader:
 
     def __repr__(self) -> str:
         return f"DataFolderReader object containing data over {len(self.id_to_subjectData_map)} subjects."
+
+    def __getitem__(self, idx) -> SubjectData:
+        return self.subject_data[idx]
