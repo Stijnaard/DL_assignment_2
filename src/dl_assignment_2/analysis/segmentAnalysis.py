@@ -19,28 +19,32 @@ class SegmentAnalysis:
     task_types: List[str] = TASK_TYPES
     x: SubjectData = intra_training_data[0]
 
+    task_to_data_map: Dict[str, ndarray] = {}
+    for task in task_types:
+        task_specific_segment: DataSegment = x.get_data_for_task(task)[0]
+        task_to_data_map[task] = task_specific_segment.get_data()
+
     def show_segment_for_each_task(self) -> None:
-        task_to_data_map: Dict[str, ndarray] = {}
-        for task in self.task_types:
-            task_specific_segment: DataSegment = self.x.get_data_for_task(task)[0]
-            task_to_data_map[task] = task_specific_segment.get_data()
 
-        _, ax = plt.subplots(2, 2)
+        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
-        # this whole part could get refactored:
-        ax[0,0].imshow(task_to_data_map["rest"], aspect="auto")
-        ax[0,0].set_title("rest segment")
+        # Map tasks to titles and subplot positions
+        plot_config = [
+            (axes[0, 0], "rest", "rest segment"),
+            (axes[0, 1], "task_motor", "motoric segment"),
+            (axes[1, 0], "task_story_math", "math & story segment"),
+            (axes[1, 1], "task_working_memory", "working memory segment"),
+        ]
 
-        ax[0,1].imshow(task_to_data_map["task_motor"], aspect="auto")
-        ax[0,1].set_title("motoric segment")
-
-        ax[1,0].imshow(task_to_data_map["task_story_math"], aspect="auto")
-        ax[1,0].set_title("math & story segment")
-
-        ax[1,1].imshow(task_to_data_map["task_working_memory"], aspect="auto")
-        ax[1,1].set_title("working memory segment")
+        for ax, task_key, title in plot_config:
+            im = ax.imshow(self.task_to_data_map[task_key], aspect="auto")
+            ax.set_title(title)
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
         plt.show()
+
+    def check_negative_value_presence(self) -> None:
+       raise NotImplementedError("still gotta implement this") 
 
 
 if __name__ == "__main__":
