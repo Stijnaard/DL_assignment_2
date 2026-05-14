@@ -1,3 +1,7 @@
+"""
+This file contains the class that is responsible for performing analysis on individual segments. 
+"""
+
 # imports:
 #//>>
 from dl_assignment_2.data.dataSegment import DataSegment
@@ -45,8 +49,91 @@ class SegmentAnalysis:
 
     def check_negative_value_presence(self) -> None:
        raise NotImplementedError("still gotta implement this") 
+    
+    def plot_data_as_lines(self) -> None:
+        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+        _, line_summary_axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
+        # Map tasks to titles and subplot positions
+        plot_config = [
+            (axes[0, 0], "rest", "rest segment"),
+            (axes[0, 1], "task_motor", "motoric segment"),
+            (axes[1, 0], "task_story_math", "math & story segment"),
+            (axes[1, 1], "task_working_memory", "working memory segment"),
+        ]
+
+        for ax, task_name, title in plot_config:
+            task_data: ndarray = self.task_to_data_map[task_name]*10**10
+            line_means: List[float] = []
+            line_std_devs: List[float] = []
+            for row_idx in range(0, task_data.shape[0]-200):
+                row: ndarray = task_data[row_idx,1000:2500].flatten()
+                row_avg: float = row.mean()
+                row_std_dev: float = row.std()
+
+                line_means.append(row_avg)
+                line_std_devs.append(row_std_dev)
+
+                ax.plot(row)
+            ax.set_title(title)
+
+        plt.show()
+    
+    def plot_means_hist(self) -> None:
+        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+
+        # Map tasks to titles and subplot positions
+        plot_config = [
+            (axes[0, 0], "rest", "rest segment"),
+            (axes[0, 1], "task_motor", "motoric segment"),
+            (axes[1, 0], "task_story_math", "math & story segment"),
+            (axes[1, 1], "task_working_memory", "working memory segment"),
+        ]
+
+        for ax, task_name, title in plot_config:
+            task_data: ndarray = self.task_to_data_map[task_name]*10**10
+            line_means: List[float] = []
+            for row_idx in range(0, task_data.shape[0]-200):
+                row: ndarray = task_data[row_idx,1000:2500].flatten()
+                row_avg: float = row.mean()
+
+                line_means.append(row_avg)
+
+            ax.hist(line_means, bins=10, edgecolor="black")
+            ax.set_title(title)
+
+        plt.show()
+
+    def plot_std_dev_hist(self) -> None:
+        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+
+        # Map tasks to titles and subplot positions
+        plot_config = [
+            (axes[0, 0], "rest", "rest segment"),
+            (axes[0, 1], "task_motor", "motoric segment"),
+            (axes[1, 0], "task_story_math", "math & story segment"),
+            (axes[1, 1], "task_working_memory", "working memory segment"),
+        ]
+
+        for ax, task_name, title in plot_config:
+            task_data: ndarray = self.task_to_data_map[task_name]*10**10
+
+            line_std_devs: List[float] = []
+            for row_idx in range(0, task_data.shape[0]-200):
+                row: ndarray = task_data[row_idx,1000:2500].flatten()
+                row_std_dev: float = row.std()
+
+                line_std_devs.append(row_std_dev)
+
+            ax.hist(line_std_devs, bins=10, edgecolor="black")
+            ax.set_title(title)
+
+        plt.show()
+            
+            
 
 if __name__ == "__main__":
     x: SegmentAnalysis = SegmentAnalysis()
-    x.show_segment_for_each_task()
+    #x.show_segment_for_each_task()
+    #x.plot_data_as_lines()
+    x.plot_std_dev_hist()
