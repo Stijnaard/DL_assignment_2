@@ -5,9 +5,7 @@ from h5py import File
 from numpy import ndarray, array
 import matplotlib.pyplot as plt
 
-from typing import Tuple
-
-from dl_assignment_2.data.data_config import INTRA_TRAIN
+from typing import Tuple, Callable
 #//<<
 
 class DataSegment:
@@ -44,6 +42,11 @@ class DataSegment:
 
     def __repr__(self) -> str:
         return f"data segment concerning subject: {self.subject_id} for task: {self.task} at segment: {self.segment}."
+    
+    def transform(self, transformation_function: Callable) -> None:
+        self.data = transformation_function(self.data)
+        return None
+    
     def _read_segment_from_file(self, path: str) -> ndarray:
         #//>>
         file: File = h5py.File(path, 'r')
@@ -115,4 +118,3 @@ class DataSegment:
         plt.imshow(self.data, aspect='auto')
         plt.show()
         return None
-
