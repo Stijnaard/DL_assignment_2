@@ -18,13 +18,13 @@ from os import scandir
 #//<<
 
 class TaskAnalysis:
-    _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+    _, __axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
-    plot_config = [
-        (axes[0, 0], "rest", "rest segment"),
-        (axes[0, 1], "task_motor", "motoric segment"),
-        (axes[1, 0], "task_story_math", "math & story segment"),
-        (axes[1, 1], "task_working_memory", "working memory segment"),
+    __plot_config = [
+        (__axes[0, 0], "rest", "rest segment"),
+        (__axes[0, 1], "task_motor", "motoric segment"),
+        (__axes[1, 0], "task_story_math", "math & story segment"),
+        (__axes[1, 1], "task_working_memory", "working memory segment"),
     ]
 
     def __init__(self, folder_path: str = AbsPathProvider().get_intra_train_path(), subject_id: Optional[int] = None, segment: int = 1) -> None:
@@ -59,8 +59,8 @@ class TaskAnalysis:
 
         return None
 
-    def show_segment_for_each_task(self) -> None:
-        for ax, task_key, title in self.plot_config:
+    def plot_segment_per_task(self) -> None:
+        for ax, task_key, title in self.__plot_config:
             im = ax.imshow(self.task_to_data_map[task_key], aspect="auto")
             ax.set_title(title)
             plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
@@ -71,7 +71,7 @@ class TaskAnalysis:
        raise NotImplementedError("still gotta implement this") 
     
     def plot_data_as_lines(self) -> None:
-        for ax, task_name, title in self.plot_config:
+        for ax, task_name, title in self.__plot_config:
             task_data: ndarray = self.task_to_data_map[task_name]
             
             line_means: List[float] = []
@@ -93,17 +93,7 @@ class TaskAnalysis:
         return None
     
     def plot_means_hist(self) -> None:
-        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
-
-        # Map tasks to titles and subplot positions
-        plot_config = [
-            (axes[0, 0], "rest", "rest segment"),
-            (axes[0, 1], "task_motor", "motoric segment"),
-            (axes[1, 0], "task_story_math", "math & story segment"),
-            (axes[1, 1], "task_working_memory", "working memory segment"),
-        ]
-
-        for ax, task_name, title in plot_config:
+        for ax, task_name, title in self.__plot_config:
             task_data: ndarray = self.task_to_data_map[task_name]*10**10
             line_means: List[float] = []
             for row_idx in range(0, task_data.shape[0]-200):
@@ -121,16 +111,7 @@ class TaskAnalysis:
         return None
 
     def plot_std_dev_hist(self) -> None:
-        _, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
-
-        plot_config = [
-            (axes[0, 0], "rest", "rest segment"),
-            (axes[0, 1], "task_motor", "motoric segment"),
-            (axes[1, 0], "task_story_math", "math & story segment"),
-            (axes[1, 1], "task_working_memory", "working memory segment"),
-        ]
-
-        for ax, task_name, title in plot_config:
+        for ax, task_name, title in self.__plot_config:
             task_data: ndarray = self.task_to_data_map[task_name]*10**10
 
             line_std_devs: List[float] = []
@@ -150,3 +131,7 @@ class TaskAnalysis:
 
 if __name__ == "__main__":
     ta: TaskAnalysis = TaskAnalysis()
+    ta.plot_segment_per_task()
+    ta.plot_data_as_lines()
+    ta.plot_means_hist()
+    ta.plot_std_dev_hist()
