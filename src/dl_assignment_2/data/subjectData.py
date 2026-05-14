@@ -58,6 +58,8 @@ class SubjectData:
             if segment.get_task() == task:
                 task_specific_segments.append(segment)
 
+        task_specific_segments = sorted(task_specific_segments, key = lambda x: x.get_segment())
+
         return task_specific_segments
         #//<<
 

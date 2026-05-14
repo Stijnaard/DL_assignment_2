@@ -38,8 +38,12 @@ class DataSegment:
         self.segment: int = segment
 
         self.data: ndarray = self._read_segment_from_file(relative_path)
+        
+        return None
         #//<<
 
+    def __repr__(self) -> str:
+        return f"data segment concerning subject: {self.subject_id} for task: {self.task} at segment: {self.segment}."
     def _read_segment_from_file(self, path: str) -> ndarray:
         #//>>
         file: File = h5py.File(path, 'r')
@@ -111,10 +115,4 @@ class DataSegment:
         plt.imshow(self.data, aspect='auto')
         plt.show()
         return None
-    
-if __name__ == "__main__":
-    from dl_assignment_2.data.absPathProvider import AbsPathProvider
-    abs_folder_path: str = AbsPathProvider().get_intra_train_path()
-    segment: DataSegment = DataSegment(abs_folder_path+"/rest_105923_5.h5")
-    segment.plot()
 
