@@ -3,6 +3,7 @@
 import h5py
 from h5py import File
 from numpy import ndarray, array
+import matplotlib.pyplot as plt
 
 from typing import Tuple
 
@@ -105,3 +106,15 @@ class DataSegment:
         #//>>
         return self.segment
         #//<<
+
+    def plot(self) -> None:
+        plt.imshow(self.data, aspect='auto')
+        plt.show()
+        return None
+    
+if __name__ == "__main__":
+    from dl_assignment_2.data.absPathProvider import AbsPathProvider
+    abs_folder_path: str = AbsPathProvider().get_intra_train_path()
+    segment: DataSegment = DataSegment(abs_folder_path+"/rest_105923_5.h5")
+    segment.plot()
+

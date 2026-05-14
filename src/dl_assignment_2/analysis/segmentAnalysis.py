@@ -1,5 +1,9 @@
 """
 This file contains the class that is responsible for performing analysis on individual segments. 
+The main goal was just plotting the segments and maybe trying some transformations of the data.
+
+However, the analysis has more so shifted from studying individual segments to studying different segments belonging to different tasks.
+To keep these two types of analyis seperate, some refactoring would have to get performed.
 """
 
 # imports:
@@ -129,11 +133,3 @@ class SegmentAnalysis:
             ax.set_title(title)
 
         plt.show()
-            
-            
-
-if __name__ == "__main__":
-    x: SegmentAnalysis = SegmentAnalysis()
-    #x.show_segment_for_each_task()
-    #x.plot_data_as_lines()
-    x.plot_std_dev_hist()
