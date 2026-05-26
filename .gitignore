@@ -1,7 +1,6 @@
 datasets/
 
 .python-version
-main.py 
 pyproject.toml
 uv.lock
 __pycache__/
