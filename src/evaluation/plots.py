@@ -279,12 +279,13 @@ def save_results_csv(
                 "Model":      model,
                 "Accuracy":   f"{metrics.get('accuracy',   0):.3f}",
                 "Macro F1":   f"{metrics.get('f1',         0):.3f}",
-                "Parameters": f"{(int)(metrics.get('parameters', 0))}"
+                "Parameters": f"{(int)(metrics.get('parameters', 0))}",
+                "Training-time(s)": f"{metrics.get('training_time', 0):.3f}"
             })
 
-    fieldnames = ["Experiment", "Model", "Accuracy", "Macro F1", "Parameters"]
+    fieldnames = ["Experiment", "Model", "Accuracy", "Macro F1", "Parameters", "Training-time(s)"]
     with open(path, "w", newline = "") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames = fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
