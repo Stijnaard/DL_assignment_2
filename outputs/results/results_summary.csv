@@ -1,0 +1,3 @@
+Experiment,Model,Accuracy,Macro F1,Parameters
+Intra,CNN-1D,0.790,0.786,336900
+Cross,CNN-1D,0.423,0.436,336900

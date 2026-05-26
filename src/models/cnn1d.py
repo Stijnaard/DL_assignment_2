@@ -1,0 +1,89 @@
+"""
+A 1D CNN slides small filters along the time axis to detect local patterns.
+Each filter learns to recognise a specific short temporal event.
+
+Stacking multiple conv layers lets the network learn hierarchical features:
+Layer 1 -> short bursts
+Layer 2 -> rhythmic patterns
+Layer 3 -> longer events
+
+Pro's: faster to train, local patterns
+Con: not so good at very long-range
+
+- Xavier is designed for symmetric activations (e.g., Tanh, Sigmoid), 
+- Kaiming for asymmetrical, piecewise linear activations (e.g., ReLU)
+"""
+
+import torch.nn as nn
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config.config import (N_CHANNELS, NUM_CLASSES,
+    CNN1D_CHANNELS, CNN1D_KERNEL, CNN1D_DROPOUT)
+
+class Conv1DBlock(nn.Module):
+    """One convolutional block: Conv -> BatchNorm -> GELU -> Dropout"""
+    def __init__(self, in_ch, out_ch, kernel, dropout):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv1d(in_ch, out_ch,
+                      kernel_size = kernel,
+                      padding = kernel // 2,
+                      bias = False),
+            nn.BatchNorm1d(out_ch),
+            nn.GELU(),
+            nn.Dropout(dropout))
+
+    def forward(self, x):
+        return self.block(x)
+
+class CNN1DClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        channels = CNN1D_CHANNELS
+        kernel   = CNN1D_KERNEL
+        dropout  = CNN1D_DROPOUT
+
+        # 1. Input projection (248 sensors -> first channel count)
+        # Learned spatial filter over sensors
+        self.input_sequential = nn.Sequential(
+            nn.Conv1d(N_CHANNELS, channels[0], kernel_size = 1, bias = False),
+            nn.BatchNorm1d(channels[0]),
+            nn.GELU())
+
+        # 2. Stacked conv. blocks with 2x downsampling between layers
+        layers = []
+        for i in range(len(channels) - 1):
+            layers.append(Conv1DBlock(channels[i], channels[i + 1], kernel, dropout))
+            layers.append(nn.MaxPool1d(2)) # Downsample time by 2x
+        self.conv_blocks = nn.Sequential(*layers)
+
+        # 3. Global average pooling
+        # Regardless of time length after conv, we get one vector per filter
+        self.gap = nn.AdaptiveAvgPool1d(1) # (B, C, T) -> (B, C, 1)
+
+        # 4. Classification head
+        self.head = nn.Sequential(
+            nn.Flatten(),
+            nn.Dropout(dropout),
+            nn.Linear(channels[-1], channels[-1] // 2),
+            nn.GELU(),
+            nn.Linear(channels[-1] // 2, NUM_CLASSES))
+        self.init_weights()
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity="relu")
+            elif isinstance(m, (nn.BatchNorm1d,)):
+                nn.init.ones_(m.weight); nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None: nn.init.zeros_(m.bias)
+
+    def forward(self, x):
+        """x: (batch, 248, 200) -> logits: (batch, 4)"""
+        x = self.input_sequential(x) # (B, 64,  200)
+        x = self.conv_blocks(x)      # (B, 256,  25)
+        x = self.gap(x)              # (B, 256,   1)
+        return self.head(x)          # (B, 4)
