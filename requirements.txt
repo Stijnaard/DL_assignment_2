@@ -1,10 +1,6 @@
-# MEG Brain Decoding — Python dependencies
-# Install with:  pip install -r requirements.txt
-
-h5py           # read the .h5 MEG data files
-numpy         # numerical arrays
-scikit-learn   # confusion matrix, classification report, metrics
-matplotlib     # plotting
-seaborn       # nicer heatmaps (confusion matrix)
-pandas         # save results to CSV
-scipy         # optional: for proper anti-aliasing downsampling
+h5py
+numpy
+scikit-learn
+matplotlib
+scipy
+torch

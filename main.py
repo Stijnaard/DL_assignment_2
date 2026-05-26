@@ -20,7 +20,6 @@ import time
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
-from time import time
 
 from src.utils            import *
 from src.config.config    import *
