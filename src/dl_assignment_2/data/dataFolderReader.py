@@ -7,7 +7,7 @@ from os import scandir
 
 class DataFolderReader:
     """
-    This class reads a whole folder of datasets and stratifies the datasets over test subjects.
+    This class reads a whole folder of datasets and distributes the datasets over test subjects.
     This mapping is kept in the id_to_subjectData_map.
 
     How to use it:
@@ -18,6 +18,7 @@ class DataFolderReader:
         id_to_subjectData_map: dictionary that maps subject ID's (as integers) to SubjectData objects.
         The SubjectData object tied to its respective subject ID represents the set of datasets/segments available for that person.
     """
+    
     id_to_subjectData_map: Dict[int, SubjectData] = {}
     subject_data: List[SubjectData] = []
 
@@ -60,14 +61,21 @@ class DataFolderReader:
     def get_data_for_specific_task(self, task: str) -> List[DataSegment]:
         #//>>
         task_specific_segments: List[DataSegment] = []
-        if task not in TASK_TYPES:
-            raise ValueError(f"the task queried for does not exist: {task}")
+        
+        self._check_task_validity(task)
 
         for subjectData in self.id_to_subjectData_map.values():
             task_specific_segments.extend(subjectData.get_data_for_task(task))
 
         return task_specific_segments
         #//<<
+        
+    def _check_task_validity(self, task) -> None:
+        if task not in TASK_TYPES:
+            raise ValueError(f"the task queried for does not exist: {task}")
+        
+        return None
+    
 
     def get_subjects(self) -> List[int]:
         return list(self.id_to_subjectData_map.keys())

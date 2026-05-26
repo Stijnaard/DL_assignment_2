@@ -15,9 +15,10 @@ import matplotlib.pyplot as plt
 
 from typing import List, Dict, Optional, Callable
 from os import scandir
+from math import sqrt, ceil
 #//<<
 
-class TaskAnalysis:
+class BetweenTaskAnalysis:
     _, __axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
     __plot_config = [
@@ -48,6 +49,14 @@ class TaskAnalysis:
     
     def __repr__(self) -> str:
         return f"TaskAnalysis object for subject: {self.subject_id} for segment: {self.segment}."
+    
+    def perform_full_analysis(self) -> None:
+        self.plot_segment_per_task()
+        self.plot_data_as_lines()
+        self.plot_means_hist()
+        self.plot_std_dev_hist()
+        
+        return None
     
     def transform(self, transformation_function: Callable) -> None:
         for name in self.task_to_data_map:
@@ -128,10 +137,55 @@ class TaskAnalysis:
         plt.show()
         
         return None
+    
+    
+class WithinTaskAnalysis:
+    def __init__(self, segments: List[DataSegment], task: str) -> None:
+        self._check_task_cohesion(segments, task)
+        
+        self.segments: List[DataSegment] = segments
+        self.task_name: str = task
+        
+        return None
+        
+    def _check_task_cohesion(self, segments: List[DataSegment], task: str):
+        assert all(segment.get_task() == task for segment in segments)
+        return None
 
+    def __len__(self) -> int:
+        return len(self.segments)
+    
+    def __repr__(self) -> str:
+        return f"DifferentTaskAnalysis object for {self.task_name} task with {len(self)} segments."
+
+    def plot_all_segments(self) -> None:
+        row_column_amount: int = self._compute_plot_dimensions()
+        fig, ax = plt.subplots(row_column_amount, row_column_amount)
+        
+        for idx, segment in enumerate(self.segments):
+            row_idx: int = idx%row_column_amount
+            column_idx: int = idx//row_column_amount
+            ax[row_idx, column_idx].imshow(segment.data, aspect="auto")
+            
+        plt.show()
+        return None
+
+    def _compute_plot_dimensions(self):
+        """  
+        computes the amount of rows and columns for the subplots function.
+        This function computes the grid size needed to show everything as evenly as possible
+        """
+        return ceil(sqrt(len(self)))    
+     
+   
 if __name__ == "__main__":
-    ta: TaskAnalysis = TaskAnalysis()
-    ta.plot_segment_per_task()
-    ta.plot_data_as_lines()
-    ta.plot_means_hist()
-    ta.plot_std_dev_hist()
+    from dl_assignment_2.data.dataFolderReader import DataFolderReader
+    loader: DataFolderReader = DataFolderReader()
+    from dl_assignment_2.data.data_config import TASK_TYPES
+    
+    for task_type in TASK_TYPES:
+        rest_data: List[DataSegment] = loader.get_data_for_specific_task(task_type)
+        
+        dta: WithinTaskAnalysis = WithinTaskAnalysis(rest_data, task_type)
+        dta.plot_all_segments()
+        print(dta)

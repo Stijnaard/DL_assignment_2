@@ -64,7 +64,7 @@ class DataSegment:
 
         task: str = DataSegment._get_task_from_fileName(file_name_without_extension)
         segment = file_name_without_extension.split("_")[-1]
-        subject_id: int = file_name_without_extension.split("_")[-2]
+        subject_id: str = file_name_without_extension.split("_")[-2]
 
         converted_subject_id: int = int(subject_id)
         converted_segment: int = int(segment)
