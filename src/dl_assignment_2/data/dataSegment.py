@@ -5,7 +5,8 @@ from h5py import File
 from numpy import ndarray, array
 import matplotlib.pyplot as plt
 
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Optional
+from dataclasses import dataclass
 #//<<
 
 class DataSegment:
@@ -28,24 +29,44 @@ class DataSegment:
     task: str
     segment: int
 
-    def __init__(self, relative_path: str) -> None:
+    def __init__(self, relative_path: Optional[str] = None, dataSegmentInfo: DataSegmentInfo = None) -> None:
         #//>>
+        if relative_path:
+            self._construct_segment_from_file(relative_path)
+        elif dataSegmentInfo:
+            self._construct_segment_from_DataSegmentInfo(dataSegmentInfo)
+        else:
+            raise ValueError("relative path AND dataSegmentInfo variable have been left unspecified.")
+        
+        return None
+
+    def _construct_segment_from_DataSegmentInfo(self, dataSegmentInfo: DataSegmentInfo) -> None:
+        self.data: ndarray = dataSegmentInfo.data
+        self.subject_id: int = dataSegmentInfo.subject_id
+        self.task: str = dataSegmentInfo.task
+        self.segment: int = dataSegmentInfo.segment
+
+        return None
+        
+    def _construct_segment_from_file(self, relative_path):
         task, subject_id, segment = self._get_metadata(relative_path)
         self.task: str = task
         self.subject_id: int = subject_id
         self.segment: int = segment
 
         self.data: ndarray = self._read_segment_from_file(relative_path)
-        
-        return None
         #//<<
 
     def __repr__(self) -> str:
         return f"data segment concerning subject: {self.subject_id} for task: {self.task} at segment: {self.segment}."
     
     def transform(self, transformation_function: Callable) -> None:
-        self.data = transformation_function(self.data)
-        return None
+        data = transformation_function(self.data)
+
+        return DataSegment(dataSegmentInfo=DataSegmentInfo(data=data, 
+                               subject_id=self.subject_id, 
+                               task=self.task, 
+                               segment=self.segment))
     
     def _read_segment_from_file(self, path: str) -> ndarray:
         #//>>
@@ -118,3 +139,20 @@ class DataSegment:
         plt.imshow(self.data, aspect='auto')
         plt.show()
         return None
+    
+    def trim(self) -> None:
+        pass
+
+
+@dataclass
+class DataSegmentInfo:
+    """
+    This class helps out with transferring info from one datasegment to another
+    when trying to create a copy or new object based on the data of another one.
+
+    It should not be created manually ever.
+    """
+    data: ndarray
+    subject_id: int
+    task: str
+    segment: int

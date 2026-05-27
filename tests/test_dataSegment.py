@@ -1,9 +1,8 @@
 from dl_assignment_2.data.data_config import INTRA_TRAIN
 from dl_assignment_2.data.dataSegment import DataSegment
 
-from numpy import ndarray
+from numpy import ndarray, all
 
-direct_path: str = "datasets/Intra/train/rest_105923_1.h5"
 indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
 
 class Test_DataSegment:
@@ -17,7 +16,7 @@ class Test_DataSegment:
     def test_correct_shape_read(self):
         data: ndarray = self.x.get_data()
         n_sensors: int = data.shape[0]
-        n_recordings: int = data.shape[1]
+        n_recordings: int = data.shape[1]   # shape: (248, 35624)
         
         assert n_sensors == 248
         assert n_recordings == 35624
@@ -38,6 +37,14 @@ class Test_DataSegment:
         indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
         indirect_datasegment: DataSegment = DataSegment(indirect_path)
         assert indirect_datasegment is not None
+
+    def test_transform_is_for_new_obj(self):
+        y: DataSegment = self.x.transform(lambda a: a*0)
+        assert type(y) == DataSegment
+        assert all(self.x.data) and (not all(y.data))
+
+    
+        
     
         
         
