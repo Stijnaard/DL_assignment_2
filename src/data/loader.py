@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import h5py
 import torch
-
 from torch.utils.data import Dataset, DataLoader, random_split
+
 from src.config.config import *
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -62,7 +62,7 @@ def minmax(data: np.ndarray) -> np.ndarray:
 
 # 4. Normalize the data
 def normalize(data: np.ndarray, method: str = NORMALIZATION) -> np.ndarray:
-    """Apply the chosen normalisation method, default = z_score"""
+    """Apply the chosen normalisation method"""
     if method == "minmax": return minmax(data)
     return zscore(data)
 
@@ -100,9 +100,9 @@ def process_files(filepaths: list[Path], verbose: bool = True
     Process multiple files and concatenate their windows
     (These are the chunks during Cross training (hint 3))
     """
-    print("nog steeds de oude")
     all_X: list[np.ndarray] = []
     all_y: list[np.ndarray] = []
+
     for fp in filepaths:
         X, y = process_file(fp)
         all_X.append(X)
@@ -110,6 +110,7 @@ def process_files(filepaths: list[Path], verbose: bool = True
         if verbose:
             label_name = LABELS[y[0]]
             print(f"Loaded: {fp.name:45s} with {len(y):4d} windows [{label_name}]")
+
     return np.concatenate(all_X), np.concatenate(all_y)
 
 # Create the dataset
@@ -167,17 +168,16 @@ def build_loaders(
             shuffle     = shuffle,
             num_workers = NUM_WORKERS,
             pin_memory  = True,   # Faster GPU handling
-            drop_last  = shuffle, # drop incomplete last batch only during training
-        )
+            drop_last  = shuffle) # drop incomplete last batch only during training
 
-    return (make_loader(train_ds, True), make_loader(val_ds, False),
+    return (make_loader(train_ds, True),
+        make_loader(val_ds, False),
         make_loader(test_ds, False))
 
 def build_loaders_chunked(
         train_folder: Path,
         test_folders: list[Path],
         files_per_chunk: int = 8,
-        batch_size: int = BATCH_SIZE,
         verbose: bool = True,
     ) -> tuple[list[list[Path]], list[Path]]:
     """

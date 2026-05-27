@@ -11,17 +11,18 @@ save_results_csv()        -> save all results to a CSV for the paper table
 import csv
 from pathlib import Path
 import numpy as np
+from sklearn.metrics import (
+    confusion_matrix, classification_report, accuracy_score, f1_score)
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-from sklearn.metrics import (
-    confusion_matrix, classification_report, accuracy_score, f1_score)
+from src.config.config import LABELS, FIGURES_DIR, RESULTS_DIR
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.config.config import LABELS, FIGURES_DIR, RESULTS_DIR
 
 # Constants
 PALETTE = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B2"]
@@ -69,14 +70,14 @@ def save_plot(fig, name: str):
 def plot_training_curves(history: dict[str, list[float]],
         model_name: str, experiment: str):
     """
-    Two-panel plot: training/validation loss (left) and accuracy (right).
+    Two-panel plot: training/validation loss (left) and accuracy (right)
     """
     get_plot_style()
     epochs = range(1, len(history["train_loss"]) + 1)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (12, 4))
     fig.suptitle(
         f"{model_name} - {experiment}-subject Training Curves",
-        fontsize = 13, fontweight = "bold")
+        fontsize = 16, fontweight = "bold")
 
     # Loss plot
     ax1.plot(epochs, history["train_loss"],
@@ -104,13 +105,8 @@ def plot_training_curves(history: dict[str, list[float]],
     save_plot(fig, f"{model_name}_{experiment}_curves")
 
 # 2. Confusion matrix
-def plot_confusion_matrix(
-        y_true:     list[int],
-        y_pred:     list[int],
-        model_name: str,
-        experiment: str,
-        normalize:  bool = True,
-    ):
+def plot_confusion_matrix(y_true: list[int], y_pred: list[int],
+        model_name: str, experiment: str, normalize:  bool = True):
     """Heatmap of true vs predicted labels"""
     get_plot_style()
     cm = confusion_matrix(y_true, y_pred)
@@ -131,7 +127,7 @@ def plot_confusion_matrix(
 
     # Colour grid
     im = ax.imshow(cm_plot, interpolation = "nearest", cmap = "Blues",
-                   vmin = 0, vmax = vmax, aspect = "auto")
+        vmin = 0, vmax = vmax, aspect = "auto")
     fig.colorbar(im, ax = ax, fraction = 0.046, pad = 0.04)
 
     # White cell borders
@@ -147,9 +143,8 @@ def plot_confusion_matrix(
             raw   = cm[row, col]
             label = fmt.format(val if normalize else raw)
             color = "white" if val > thresh else "black"
-            ax.text(col, row, label,
-                    ha = "center", va = "center",
-                    fontsize = 13, color = color, fontweight = "bold")
+            ax.text(col, row, label, ha = "center", va = "center",
+                fontsize = 13, color = color, fontweight = "bold")
 
     ax.set_xticks(range(n))
     ax.set_yticks(range(n))
@@ -159,10 +154,11 @@ def plot_confusion_matrix(
     ax.set_ylabel("True label",      fontsize = 12, labelpad = 8)
     ax.set_title(
         f"{model_name} - {experiment}-subject Confusion Matrix {title_suffix}",
-        fontsize = 12, fontweight = "bold", pad = 12)
+        fontsize = 16, fontweight = "bold", pad = 12)
 
     fig.tight_layout()
     save_plot(fig, f"{model_name}_{experiment}_confusion")
+
     return cm
 
 # 3. Model comparison bar chart
@@ -189,9 +185,8 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str):
     ax.set_ylabel("Score (%)")
     ax.set_ylim(0, 115)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
-    ax.set_title(
-        f"Model Comparison - {experiment}-subject Classification",
-        fontsize = 13, fontweight = "bold")
+    ax.set_title(f"Model Comparison - {experiment}-subject Classification",
+        fontsize = 16, fontweight = "bold")
     ax.legend()
     fig.tight_layout()
     save_plot(fig, f"comparison_{experiment}_bar")
@@ -199,65 +194,74 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str):
 # 4. Intra vs Cross generalisation gap
 def plot_intra_vs_cross(
         intra_results: dict[str, float],
-        cross_results: dict[str, float],
-    ):
+        cross_results: dict[str, float]):
     """Grouped bars showing how much accuracy drops from Intra to Cross"""
     get_plot_style()
     models = list(intra_results.keys())
-    intra  = [intra_results[m]        * 100 for m in models]
-    cross  = [cross_results.get(m, 0) * 100 for m in models]
+    intra = [intra_results[m]        * 100 for m in models]
+    cross = [cross_results.get(m, 0) * 100 for m in models]
 
-    x, w = np.arange(len(models)), 0.35
+    x = np.arange(len(models))
+    width = 0.35 # width bar
     fig, ax = plt.subplots(figsize = (10, 5))
 
-    bars_i = ax.bar(x - w / 2, intra, w, label="Intra-subject",
-                    color = PALETTE[0], alpha = 0.87)
-    bars_c = ax.bar(x + w / 2, cross, w, label="Cross-subject",
-                    color = PALETTE[2], alpha = 0.87)
+    bars_i = ax.bar(x - width / 2, intra, width,
+        label = "Intra-subject", color = PALETTE[0], alpha = 0.87)
+    bars_c = ax.bar(x + width / 2, cross, width,
+        label = "Cross-subject", color = PALETTE[2], alpha = 0.87)
 
-    get_bar_labels(ax, bars_i)
-    get_bar_labels(ax, bars_c)
+    # Value labels on bars
+    for bi, bc in zip(bars_i, bars_c):
+        hi = bi.get_height()
+        hc = bc.get_height()
+        xi = bi.get_x() + bi.get_width() / 2
+        xc = bc.get_x() + bc.get_width() / 2
+        # Push labels outward for reading clarify
+        ax.text(xi - 0.05, hi + 1.0, f"{hi:.1f}%",
+            ha = "center", va = "bottom", fontsize = 12)
+        ax.text(xc + 0.05, hc + 1.0, f"{hc:.1f}%",
+            ha = "center", va = "bottom", fontsize = 12)
 
-    # Annotate the accuracy drop in red above each Cross bar
+    # Red accuracy-drop annotations
     for i, (ia, ca) in enumerate(zip(intra, cross)):
         drop = ia - ca
         if drop > 0.5:
-            ax.text(
-                i + w / 2, ca + 10,
-                f"\u2212{drop:.1f}%",
-                ha = "center", va = "bottom", fontsize = 10,
-                color="#C44E52", fontweight = "bold",
-            )
+            left_x  = x[i] - width / 2
+            right_x = x[i] + width / 2
+            y = max(ia, ca) + 10            # Position bracket above taller bar
+            # Draw bracket
+            ax.plot([left_x, left_x, right_x, right_x], [y - 1.5, y, y, y - 1.5],
+                color = PALETTE[3], linewidth = 1.5)
+            # Centered red drop text
+            ax.text(x[i], y + 1.0, f"\u2212{drop:.1f}%",
+                ha = "center", va = "bottom", fontsize = 11,
+                color = PALETTE[3], fontweight = "bold")
 
     ax.set_xticks(x)
     ax.set_xticklabels(models, fontsize = 13)
     ax.set_ylabel("Test Accuracy (%)")
     ax.set_ylim(0, 115)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
-    ax.set_title(
-        "Intra-subject vs Cross-subject Accuracy",
-        fontsize = 13, fontweight = "bold")
+    ax.set_title("Intra-subject vs Cross-subject Accuracy",
+        fontsize = 16, fontweight = "bold")
     ax.legend()
     fig.tight_layout()
     save_plot(fig, "intra_vs_cross")
 
 # 5. Classification report (text only)
-def print_report(
-        y_true:     list[int],
-        y_pred:     list[int],
-        model_name: str,
-        experiment: str,
+def print_report(y_true: list[int], y_pred: list[int],
+        model_name: str, experiment: str
     ) -> dict[str, float]:
     """
     Print a full per-class classification report and return accuracy + macro F1
     """
-    print(f"\n{'─' * 50}")
+    print(f"\n{'-' * 50}")
     print(f"  Classification Report: {model_name} ({experiment}-subject)")
-    print(f"{'─' * 50}")
+    print(f"{'-' * 50}")
     print(classification_report(y_true, y_pred, target_names = SHORT_LABELS, digits = 3))
 
     acc = float(accuracy_score(y_true, y_pred))
-    f1  = float(f1_score(y_true, y_pred, average="macro"))
+    f1  = float(f1_score(y_true, y_pred, average = "macro"))
     print(f"  Overall Accuracy : {acc:.3f}  ({acc * 100:.1f}%)")
     print(f"  Macro F1         : {f1:.3f}")
     return {"accuracy": acc, "f1": f1}
@@ -277,13 +281,15 @@ def save_results_csv(
             rows.append({
                 "Experiment": experiment,
                 "Model":      model,
-                "Accuracy":   f"{metrics.get('accuracy',   0):.3f}",
-                "Macro F1":   f"{metrics.get('f1',         0):.3f}",
+                "Accuracy":   f"{metrics.get('accuracy', 0):.3f}",
+                "Macro F1":   f"{metrics.get('f1', 0):.3f}",
                 "Parameters": f"{(int)(metrics.get('parameters', 0))}",
-                "Training-time(s)": f"{metrics.get('training_time', 0):.3f}"
+                "Last Epoch": f"{(int)(metrics.get('last-epoch', 0))}",
+                "Training Time (s)": f"{metrics.get('training_time', 0):.3f}"
             })
 
-    fieldnames = ["Experiment", "Model", "Accuracy", "Macro F1", "Parameters", "Training-time(s)"]
+    fieldnames = ["Experiment", "Model", "Accuracy",
+        "Macro F1", "Parameters", "Last Epoch", "Training Time (s)"]
     with open(path, "w", newline = "") as f:
         writer = csv.DictWriter(f, fieldnames = fieldnames)
         writer.writeheader()
@@ -294,7 +300,7 @@ def save_results_csv(
     header = "  " + "  ".join(h.ljust(w) for h, w in zip(fieldnames, col_w))
     print(f"\n--Results saved to {path}")
     print(header)
-    print("  " + "  ".join("─" * w for w in col_w))
+    print("  " + "  ".join("-" * w for w in col_w))
     for row in rows:
         print("  " + "  ".join(row[h].ljust(w) for h, w in zip(fieldnames, col_w)))
 

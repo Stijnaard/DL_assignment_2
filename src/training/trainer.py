@@ -139,7 +139,6 @@ def train(
         lr:           float = LEARNING_RATE,
         weight_decay: float = WEIGHT_DECAY,
         patience:     int   = PATIENCE,
-        device_str:   str   = DEVICE,
         label_smoothing: float = 0.1
     ) -> dict[str, list[float]]:
     """
@@ -162,7 +161,7 @@ def train(
     Returns
     history : dict with lists of train_loss, val_loss, train_acc, val_acc per epoch
     """
-    # ── Setup ─────────────────────────────────────────────────────────────
+    # Setup
     model = model.to(DEVICE)
     parameters_amount = count_params(model)
     print(f"\n--Device       : {DEVICE}")
@@ -178,9 +177,7 @@ def train(
     # Track training history
     history: dict[str, list[float]] = {
         "train_loss": [], "val_loss": [],
-        "train_acc":  [], "val_acc":  [],
-        "parameters": [parameters_amount]}
-
+        "train_acc":  [], "val_acc":  []}
     # Main epoch loop
     best_val_loss, epochs_no_improve = float("inf"), 0
     for epoch in range(1, epochs + 1):
@@ -206,6 +203,7 @@ def train(
             )
 
         # Early stopping and model saving
+        end_early_epoch: int | None = None
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             epochs_no_improve = 0
@@ -215,11 +213,13 @@ def train(
             if epochs_no_improve >= patience:
                 print(f"\n--Warning-- \
                     \nEarly stopping at epoch {epoch} (no improvement for {patience} epochs)")
+                end_early_epoch = epoch
                 break
 
     # Load best weights before returning
     model.load_state_dict(torch.load(ckpt_path, map_location = DEVICE))
     print(f"\nSaved the best model to {ckpt_path}")
+    history["last-epoch"] = [float(end_early_epoch or epochs)]
     return history
 
 # Chunked training for Cross experiment (memory management)
@@ -232,7 +232,6 @@ def train_chunked(
         lr:          float  = LEARNING_RATE,
         weight_decay: float = WEIGHT_DECAY,
         patience:    int    = PATIENCE,
-        device_str:  str    = DEVICE,
         label_smoothing: float = 0.1
     ) -> dict[str, list[float]]:
     """
@@ -251,9 +250,8 @@ def train_chunked(
 
     history: dict[str, list[float]] = {
         "train_loss": [], "val_loss": [],
-        "train_acc":  [], "val_acc":  [],
-        "parameters": [parameters_amount]}
-    
+        "train_acc":  [], "val_acc":  []}
+        
     best_val_loss, epochs_no_improve = float("inf"), 0
 
     for epoch in range(1, epochs + 1):
@@ -302,6 +300,8 @@ def train_chunked(
                 f"  | val loss {val_loss:.4f}  acc {val_acc:.3f}"
             )
 
+        # Early stopping and model saving
+        end_early_epoch: int | None = None
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             epochs_no_improve = 0
@@ -310,9 +310,11 @@ def train_chunked(
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
                 print(f"\n--Warning-- \
-                    \nEarly stopping at epoch {epoch}")
+                    \nEarly stopping at epoch {epoch} (no improvement for {patience} epochs)")
+                end_early_epoch = epoch
                 break
 
     model.load_state_dict(torch.load(ckpt_path, map_location = DEVICE))
     print(f"\nSaved the best model to: {ckpt_path}")
+    history["last-epoch"] = [float(end_early_epoch or epochs)]
     return history

@@ -55,18 +55,18 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
     model = get_model(model_name)
 
     # 3. Train or load results
-    ckpt = CHECKPOINTS_DIR / f"{model_name}_intra_best.pt"
-    if eval_only and ckpt.exists():
-        print(f"\n-- Loading checkpoint: {ckpt} --")
-        model.load_state_dict(torch.load(ckpt, map_location = DEVICE))
+    ckpt_dir = CHECKPOINTS_DIR / f"{model_name}_intra_best.pt"
+    if eval_only:
+        print(f"\n-- Loading checkpoint: {ckpt_dir} --")
+        model.load_state_dict(torch.load(ckpt_dir, map_location = DEVICE))
         history = None
+        training_time = 0
     else:
         start_time = time.time()
-        history = train(
-            model, train_loader, val_loader,
+        history = train(model, train_loader, val_loader,
             model_name = model_name, experiment = "intra",
-            epochs = EPOCHS, lr = LEARNING_RATE, weight_decay = WEIGHT_DECAY,
-            patience = PATIENCE, device_str = DEVICE)
+            epochs = EPOCHS, lr = LEARNING_RATE,
+            weight_decay = WEIGHT_DECAY, patience = PATIENCE)
         training_time = time.time() - start_time
         if history:
             plot_training_curves(history, model_name.upper(), "Intra")
@@ -78,8 +78,11 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Intra")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Intra")
 
+    # Store extra metrics
     metrics["parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    metrics["training_time"] = (training_time if not eval_only else 0.0)
+    metrics["training_time"] = training_time
+    if history is not None:
+        metrics["last-epoch"] = history.get("last-epoch", [-1])[0]
 
     return metrics
 
@@ -106,7 +109,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     X_test, y_test = process_files(test_files, verbose = True)
     test_ds     = MEGDataset(X_test, y_test)
     test_loader = DataLoader(test_ds, batch_size = BATCH_SIZE,
-            shuffle = False, num_workers = NUM_WORKERS, pin_memory = True)
+        shuffle = False, num_workers = NUM_WORKERS, pin_memory = True)
 
     # 3. Build validation loader
     print("\n--Preparing validation set from first training chunk")
@@ -121,21 +124,20 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
         num_workers = NUM_WORKERS, pin_memory = True)
 
     # 4. Build the model
-    model  = get_model(model_name)
-    ckpt   = CHECKPOINTS_DIR / f"{model_name}_cross_best.pt"
+    model = get_model(model_name)
+    ckpt_dir = CHECKPOINTS_DIR / f"{model_name}_cross_best.pt"
 
     # 5. Train or load results
-    if eval_only and ckpt.exists():
-        print(f"\n--Loading checkpoint: {ckpt}")
-        model.load_state_dict(torch.load(ckpt, map_location = DEVICE))
+    if eval_only:
+        print(f"\n--Loading checkpoint: {ckpt_dir}")
+        model.load_state_dict(torch.load(ckpt_dir, map_location = DEVICE))
         history = None
+        training_time = 0
     else:
         start_time = time.time()
-        history = train_chunked(
-            model, file_chunks, val_loader,
-            model_name = model_name,
-            epochs = EPOCHS, lr = LEARNING_RATE, weight_decay = WEIGHT_DECAY,
-            patience = PATIENCE, device_str = DEVICE)
+        history = train_chunked(model, file_chunks, val_loader,
+            model_name = model_name, epochs = EPOCHS, lr = LEARNING_RATE,
+            weight_decay = WEIGHT_DECAY, patience = PATIENCE)
         training_time = time.time() - start_time
         if history:
             plot_training_curves(history, model_name.upper(), "Cross")
@@ -147,15 +149,19 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Cross")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Cross")
     
+    # Store extra metrics
     metrics["parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    metrics["training_time"] = (training_time if not eval_only else 0.0)
-
+    metrics["training_time"] = training_time
+    if history is not None:
+        metrics["last-epoch"] = history.get("last-epoch", [-1])[0]
     return metrics
 
 # Run all models and plot comparison
-def run_all(experiment: str, eval_only: bool = False) -> dict:
-    """Train all models and produce comparison plots."""
-    all_results = {}
+def run_all(experiment: str, eval_only: bool = False
+        ) -> dict[str, dict[str, dict[str, float]]]:
+    """Train all models and produce comparison plots"""
+    all_results: dict[str, dict[str, dict[str, float]]] = {}
+
     for m in ALL_MODELS:
         try:
             if experiment in ("intra", "both"):
@@ -173,8 +179,7 @@ def run_all(experiment: str, eval_only: bool = False) -> dict:
     if "Intra" in all_results and "Cross" in all_results:
         plot_intra_vs_cross(
             {m: v["accuracy"] for m, v in all_results["Intra"].items()},
-            {m: v["accuracy"] for m, v in all_results["Cross"].items()},
-        )
+            {m: v["accuracy"] for m, v in all_results["Cross"].items()})
 
     save_results_csv(all_results)
     return all_results
@@ -204,8 +209,7 @@ def main():
                 model_name = args.model
             save_results_csv({
                 "Intra": {model_name: intra_metrics},
-                "Cross": {model_name: cross_metrics},
-            })
+                "Cross": {model_name: cross_metrics}})
 
     print(f"\n{'═'*50}")
     print(f"Figures saved to: {FIGURES_DIR}")
