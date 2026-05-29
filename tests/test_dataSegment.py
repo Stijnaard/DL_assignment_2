@@ -6,7 +6,7 @@ from numpy import ndarray
 direct_path: str = "datasets/Intra/train/rest_105923_1.h5"
 indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
 
-class Test_DataSegment:
+class Test_Method_Reading:
     path: str = indirect_path
     x: DataSegment = DataSegment(path)
     
@@ -33,7 +33,8 @@ class Test_DataSegment:
     def test_correct_segment(self):
         segment: int = self.x.get_segment()
         assert segment == 1
-
+        
+class Test_Path_Stuff:
     def test_indirect_path(self):
         indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
         indirect_datasegment: DataSegment = DataSegment(indirect_path)

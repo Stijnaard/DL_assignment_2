@@ -1,6 +1,6 @@
 """
 This file contains the class that is responsible for performing analysis on multiple segments
-revolving around the same subject and segment, but peforming different tasks.
+revolving around the same subject and segment, but assessing differences between tasks.
 Therefore, the type of analysis done here is mainly to compare the data between tasks and
 hopefully gain new, interesting insights.
 """
@@ -10,7 +10,7 @@ hopefully gain new, interesting insights.
 from dl_assignment_2.data.dataSegment import DataSegment
 from dl_assignment_2.data.absPathProvider import AbsPathProvider
 
-from numpy import ndarray
+from numpy import ndarray, concatenate
 import matplotlib.pyplot as plt
 
 from typing import List, Dict, Optional, Callable
@@ -31,14 +31,16 @@ class BetweenTaskAnalysis:
     def __init__(self, folder_path: str = AbsPathProvider().get_intra_train_path(), subject_id: Optional[int] = None, segment: int = 1) -> None:
         self.task_to_data_map: Dict[str, ndarray] = {}
         self.segment: int = segment
-        self.subject_id: int = subject_id
+        
+        if subject_id:
+            self.subject_id: int = subject_id
 
         for file in scandir(folder_path):
             full_path: str = f"{folder_path}/{file.name}"
             dataSegment: DataSegment = DataSegment(full_path)
             
             if not subject_id:
-                subject_id: int = dataSegment.get_subject_id()
+                subject_id = dataSegment.get_subject_id()
                 self.subject_id = subject_id
 
             else:
@@ -143,7 +145,7 @@ class WithinTaskAnalysis:
     def __init__(self, segments: List[DataSegment], task: str) -> None:
         self._check_task_cohesion(segments, task)
         
-        self.segments: List[DataSegment] = segments
+        self.segments: List[DataSegment] = sorted(segments, key=lambda x: x.get_task())
         self.task_name: str = task
         
         return None
@@ -169,6 +171,17 @@ class WithinTaskAnalysis:
             
         plt.show()
         return None
+    
+
+    def plot_all_segments_concatenated(self) -> None:
+        segment_matrices: List[ndarray] = [segment.get_data() for segment in self.segments]
+        concatenated_segments: ndarray = concatenate(segment_matrices, axis=1)
+        
+        plt.imshow(concatenated_segments, aspect='auto')
+        plt.show()
+        
+        return None
+    
 
     def _compute_plot_dimensions(self):
         """  
@@ -177,7 +190,6 @@ class WithinTaskAnalysis:
         """
         return ceil(sqrt(len(self)))    
      
-   
 if __name__ == "__main__":
     from dl_assignment_2.data.dataFolderReader import DataFolderReader
     loader: DataFolderReader = DataFolderReader()
@@ -187,5 +199,6 @@ if __name__ == "__main__":
         rest_data: List[DataSegment] = loader.get_data_for_specific_task(task_type)
         
         dta: WithinTaskAnalysis = WithinTaskAnalysis(rest_data, task_type)
-        dta.plot_all_segments()
+        #dta.plot_all_segments()
+        dta.plot_all_segments_concatenated()
         print(dta)
