@@ -43,9 +43,9 @@ class Test_DataSegment:
         assert type(y) == DataSegment
         assert all(self.x.data) and (not all(y.data))
 
-    
-        
-    
-        
-        
-    
+    def test_trim_shape_reduction(self):
+        y: DataSegment = self.x.trim(one_in=2)
+        assert y.data.shape[1] == 35624//2
+
+        z: DataSegment = self.x.trim(one_in=13)
+        assert z.data.shape[1] == 35624//13
