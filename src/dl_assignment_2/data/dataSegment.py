@@ -140,23 +140,28 @@ class DataSegment:
         plt.show()
         return None
     
-    def trim_n_rows(self, data: ndarray, n: int = 3) -> ndarray:
+    def trim_n_rows(self, n: int = 3) -> "DataSegment":
+        "removes all rows but every N one"
+        
         kept_indices: list[int] = self._compute_indices_to_keep(n)
-
         removed_indices: list[int] = self._compute_indices_to_remove(kept_indices)
 
-        if len(data.shape) == 2:
-            return delete(data, removed_indices, 1)
+        trimmed_data: ndarray
+        if len(self.data.shape) == 2:
+            trimmed_data =  delete(self.data, removed_indices, 1)
 
         else:
-            return delete(data, removed_indices) 
+            trimmed_data = delete(self.data, removed_indices) 
+            
+        return DataSegment(dataSegmentInfo=DataSegmentInfo(trimmed_data, self.subject_id, self.task, self.segment))
+    
         
     def _compute_indices_to_keep(self, step) -> list[int]:
         start = step-1
         indices_to_keep = [start]
 
         s = 1
-        while indices_to_keep[-1] < len(self.data.shape[1]):
+        while indices_to_keep[-1] < self.data.shape[1]:
             indices_to_keep.append(start + step*s)
             s+=1
         indices_to_keep.pop()
@@ -164,7 +169,7 @@ class DataSegment:
         return indices_to_keep
 
     def _compute_indices_to_remove(self,indices_to_keep):
-        return list(set(range(len(self.data.shape[1]))).difference(indices_to_keep))
+        return list(set(range(self.data.shape[1])).difference(indices_to_keep))
 
 
 

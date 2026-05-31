@@ -34,10 +34,8 @@ class Test_Method_Reading:
         assert segment == 1
         
 class Test_Path_Stuff:
-    def test_indirect_path(self):
-        indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
-        indirect_datasegment: DataSegment = DataSegment(indirect_path)
-        assert indirect_datasegment is not None
+    indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
+    x: DataSegment = DataSegment(indirect_path)
 
     def test_transform_is_for_new_obj(self):
         y: DataSegment = self.x.transform(lambda a: a*0)
@@ -45,8 +43,8 @@ class Test_Path_Stuff:
         assert all(self.x.data) and (not all(y.data))
 
     def test_trim_shape_reduction(self):
-        y: DataSegment = self.x.trim(one_in=2)
+        y: DataSegment = self.x.trim_n_rows(n=2)
         assert y.data.shape[1] == 35624//2
 
-        z: DataSegment = self.x.trim(one_in=13)
+        z: DataSegment = self.x.trim_n_rows(n=13)
         assert z.data.shape[1] == 35624//13
