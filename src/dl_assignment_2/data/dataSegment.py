@@ -47,9 +47,9 @@ class DataSegment:
         data = transformation_function(self.data)
 
         return DataSegment(info=SegmentInfo(data=data, 
-                               subject_id=self.subject_id, 
-                               task=self.task, 
-                               segment=self.segment))
+                            subject_id=self.subject_id, 
+                            task=self.task, 
+                            segment=self.segment))
 
     # all the analytical functions:
     ###############################
@@ -104,7 +104,7 @@ class DataSegment:
         return DataSegment(info=SegmentInfo(trimmed_data, self.subject_id, self.task, self.segment))
 
         
-    def get_residuals(self) -> "DataSegment":
+    def get_residuals(self) -> "ResidualSegment":
         """Computes matrix where each column i consists of the difference
         between the the columns i and i+1 of the DataSegment's data
         """
@@ -213,8 +213,6 @@ class DataSegment:
         file_name_without_extension: str = file_name.replace(".h5", "")
         return file_name_without_extension
         #//<<
-
-    
         
     def _compute_indices_to_keep(self, step) -> list[int]:
         start = step-1
@@ -258,6 +256,32 @@ class ResidualSegment(DataSegment):
             plt.show()
             
         return axis
+    
+    def plot_element_distribution(self, n_bins: int, axis: Optional[Axes]) -> Axes:
+        axis_given: bool = True
+        
+        if not axis:
+            axis_given = False
+            _, axis = plt.subplots()
+            
+            
+        im = axis.hist(self.data.flatten(), n_bins)
+        axis.set_title(f"subject: {self.subject_id}'s residual element distribution for\n{self.task}[{self.segment}]")
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis
+    
+    def transform(self, transformation_function: Callable) -> "ResidualSegment":
+        data = transformation_function(self.data)
+
+        return ResidualSegment(info=SegmentInfo(data=data, 
+                                subject_id=self.subject_id, 
+                                task=self.task, 
+                                segment=self.segment))
+    
+    
 
 @dataclass
 class SegmentInfo:

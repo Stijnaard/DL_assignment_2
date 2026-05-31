@@ -41,7 +41,7 @@ class BetweenTaskAnalysis:
             
     def plot(self, way: str = "matrix", n_bins: int = 15) -> None:
         """Plots all segments at once"""
-        fig, axis = plt.subplots(2,2)
+        _, axis = plt.subplots(2,2)
         
         for idx, (task, segment) in enumerate(self.task_to_segment.items()):
             row_idx: int = idx//2
@@ -86,13 +86,16 @@ if __name__ == "__main__":
     bta.trim(100)
     bta.transform()
     bta.summarize()
-    bta.plot()
-    bta.plot(way="hist")
+    #bta.plot()
+    #bta.plot(way="hist")
     
     print("\n\n")
     
     bta.get_residuals()
+    bta.transform(lambda x: x*10**3)
     bta.summarize()
     bta.plot()
     bta.plot(way="hist")
+    
+    print(type(bta.task_to_segment["rest"]))
     
