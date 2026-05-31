@@ -29,22 +29,24 @@ class DataSegment:
     subject_id: int
     task: str
     segment: int
+    shape: tuple[int, int]
 
-    def __init__(self, relative_path: Optional[str] = None, dataSegmentInfo: Optional["DataSegmentInfo"] = None) -> None:
+    def __init__(self, relative_path: Optional[str] = None, info: Optional["SegmentInfo"] = None) -> None:
         #//>>
         if relative_path:
             self._construct_segment_from_file(relative_path)
-        elif dataSegmentInfo:
-            self._construct_segment_from_DataSegmentInfo(dataSegmentInfo)
+        elif info:
+            self._construct_segment_from_DataSegmentInfo(info)
         else:
             raise ValueError("relative path AND dataSegmentInfo variable have been left unspecified.")
         
+        self.shape = self.data.shape
         return None
     
     def transform(self, transformation_function: Callable) -> "DataSegment":
         data = transformation_function(self.data)
 
-        return DataSegment(dataSegmentInfo=DataSegmentInfo(data=data, 
+        return DataSegment(info=SegmentInfo(data=data, 
                                subject_id=self.subject_id, 
                                task=self.task, 
                                segment=self.segment))
@@ -58,8 +60,11 @@ class DataSegment:
             axis_given = False
             _, axis = plt.subplots()
             
-        im = axis.imshow(self.data, aspect='auto')
-        axis.set_title(f"residual plot with max residual: {self.data.max()}\nand min residual: {self.data.min()}")
+        norm_vmin = self.data.min()
+        norm_vmax = self.data.max()
+            
+        im = axis.imshow(self.data, aspect='auto', vmin=norm_vmin, vmax=norm_vmax)
+        axis.set_title(f"subject: {self.subject_id}'s {self.segment}-segment\n for {self.task}")
         plt.colorbar(im, ax=axis)
         
         if not axis_given:
@@ -67,7 +72,23 @@ class DataSegment:
             
         return axis
     
-    def trim_n_rows(self, n: int = 3) -> "DataSegment":
+    def plot_element_distribution(self, n_bins: int, axis: Optional[Axes]) -> Axes:
+        axis_given: bool = True
+        
+        if not axis:
+            axis_given = False
+            _, axis = plt.subplots()
+            
+            
+        im = axis.hist(self.data.flatten(), n_bins)
+        axis.set_title(f"subject: {self.subject_id}'s element distribution for\n{self.task}[{self.segment}]")
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis
+    
+    def trim(self, n: int = 3) -> "DataSegment":
         "removes all rows but every N one"
         
         kept_indices: list[int] = self._compute_indices_to_keep(n)
@@ -80,7 +101,7 @@ class DataSegment:
         else:
             trimmed_data = delete(self.data, removed_indices) 
             
-        return DataSegment(dataSegmentInfo=DataSegmentInfo(trimmed_data, self.subject_id, self.task, self.segment))
+        return DataSegment(info=SegmentInfo(trimmed_data, self.subject_id, self.task, self.segment))
 
         
     def get_residuals(self) -> "DataSegment":
@@ -101,7 +122,7 @@ class DataSegment:
         # 4. remove the padded first column
         unpadded_residuals: ndarray = padded_residuals[:,1:]
         
-        return DataSegment(dataSegmentInfo=DataSegmentInfo(unpadded_residuals, self.subject_id, self.task, self.segment))
+        return ResidualSegment(info=SegmentInfo(unpadded_residuals, self.subject_id, self.task, self.segment))
 
 
     # all the getters:
@@ -128,7 +149,7 @@ class DataSegment:
     
     # init helpers:
     ###############
-    def _construct_segment_from_DataSegmentInfo(self, dataSegmentInfo: "DataSegmentInfo") -> None:
+    def _construct_segment_from_DataSegmentInfo(self, dataSegmentInfo: "SegmentInfo") -> None:
         self.data: ndarray = dataSegmentInfo.data
         self.subject_id: int = dataSegmentInfo.subject_id
         self.task: str = dataSegmentInfo.task
@@ -208,14 +229,38 @@ class DataSegment:
         return indices_to_keep
 
     def _compute_indices_to_remove(self,indices_to_keep):
-        return list(set(range(self.data.shape[1])).difference(indices_to_keep))
+        return list(set(range(self.data.shape[1])).difference(indices_to_keep)) 
+    
+    def summarize(self) -> "SegmentSummary":
+        return SegmentSummary(min=self.data.min(),
+                              max=self.data.max(),
+                              mean=self.data.mean(),
+                              std=self.data.std(),
+                              shape=self.data.shape,
+                              segment=self.segment,
+                              subject_id=self.subject_id,
+                              task=self.task)
 
 
-
-
+class ResidualSegment(DataSegment):
+    def plot(self, axis: Optional[Axes] = None) -> Axes:
+        axis_given: bool = True
+        
+        if not axis:
+            axis_given = False
+            _, axis = plt.subplots()
+            
+        im = axis.imshow(self.data, aspect='auto')
+        axis.set_title(f"subject: {self.subject_id}'s {self.segment}-residual segment\n for {self.task}")
+        plt.colorbar(im, ax=axis)
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis
 
 @dataclass
-class DataSegmentInfo:
+class SegmentInfo:
     """
     This class helps out with transferring info from one datasegment to another
     when trying to create a copy or new object based on the data of another one.
@@ -226,4 +271,18 @@ class DataSegmentInfo:
     subject_id: int
     task: str
     segment: int
+    
+@dataclass
+class SegmentSummary:
+    min: float
+    max: float
+    shape: Tuple[int, int]
+    mean: float
+    std: float
+    segment: int
+    subject_id: int
+    task: str
+    
+def __str__(self) -> str:
+    return f"{self.subject_id}'s  {self.task} Segment {self.shape} w. min: {self.min}, max: {self.max} and mean: {self.mean}"
     

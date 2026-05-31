@@ -1,7 +1,7 @@
 from dl_assignment_2.data.data_config import INTRA_TRAIN
-from dl_assignment_2.data.dataSegment import DataSegment, DataSegmentInfo
+from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo, SegmentSummary
 
-from numpy import array, ndarray, all
+from numpy import array, ndarray, all, zeros
 
 indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
 
@@ -42,22 +42,61 @@ class Test_Path_Stuff:
         assert type(y) == DataSegment
         assert all(self.x.data) and (not all(y.data))
 
+class Test_trim:
+    indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
+    x: DataSegment = DataSegment(indirect_path)
+    
+
+    
     def test_trim_shape_reduction(self):
-        y: DataSegment = self.x.trim_n_rows(n=2)
+        y: DataSegment = self.x.trim(n=2)
         assert y.data.shape[1] == 35624//2
 
-        z: DataSegment = self.x.trim_n_rows(n=13)
+        z: DataSegment = self.x.trim(n=13)
         assert z.data.shape[1] == 35624//13
+        
+    def test_trimming_without_rounding(self):
+        test_matrix: ndarray = zeros(shape=(5, 15))
+        y: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
+        
+        assert y.trim(5).shape == (5,3)
+        
+    def test_trimming_with_rounding(self):
+        test_matrix: ndarray = zeros(shape=(5, 19))
+        y: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
+        
+        assert y.trim(5).shape == (5,3)
+        
+        
 
 
 class Test_residual:
     test_matrix: ndarray = array([[1,2,4], 
                                   [4,7,11]])
-    x: DataSegment = DataSegment(dataSegmentInfo=DataSegmentInfo(test_matrix, 123456, "rest", 1))
+    x: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
     
     def test_residual_correctness(self):
         residual_x: DataSegment = self.x.get_residuals()
         assert all(residual_x.data == array([[1,2],
                                          [3,4]]))
+        
+class Test_summary:
+    test_matrix: ndarray = array([[1,2,4], 
+                                  [4,7,11]])
+    x: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
+    summary: SegmentSummary = x.summarize()
+    
+    def test_shape(self):
+        assert self.summary.shape == (2,3)
+    
+    def test_min(self):
+        assert self.summary.min == 1
+        
+    def test_max(self):
+        assert self.summary.max == 11
+        
+    def test_mean(self):
+        assert self.summary.mean == 29/6
+        
         
         

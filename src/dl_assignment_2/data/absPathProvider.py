@@ -26,3 +26,7 @@ class AbsPathProvider:
 
     def get_cross_test_path(self) -> str:
         return self.CROSS_TEST
+    
+    def get_abs_path_to_segment_file(self, folder_path: str, file_name: str) -> str:
+        return f"{folder_path}/{file_name}"
+    
