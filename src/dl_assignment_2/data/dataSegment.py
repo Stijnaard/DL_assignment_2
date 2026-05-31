@@ -1,13 +1,17 @@
 # imports:
 #//>>
+from dl_assignment_2.data.segmentHelpers import SegmentSummary, SegmentInfo
+
+from typing import Tuple, Callable, Optional
+
 import h5py
 from h5py import File
 from numpy import ndarray, array, delete, zeros, concatenate
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
-from typing import Tuple, Callable, Optional
-from dataclasses import dataclass
+
+
 #//<<
 
 class DataSegment:
@@ -108,6 +112,7 @@ class DataSegment:
         """Computes matrix where each column i consists of the difference
         between the the columns i and i+1 of the DataSegment's data
         """
+        from dl_assignment_2.data.residualSegment import ResidualSegment
         # 1. construct the padding column:
         row_amount: int = self.data.shape[0]
         padding_column: ndarray = zeros(shape=(row_amount, 1))
@@ -238,75 +243,3 @@ class DataSegment:
                               segment=self.segment,
                               subject_id=self.subject_id,
                               task=self.task)
-
-
-class ResidualSegment(DataSegment):
-    def plot(self, axis: Optional[Axes] = None) -> Axes:
-        axis_given: bool = True
-        
-        if not axis:
-            axis_given = False
-            _, axis = plt.subplots()
-            
-        im = axis.imshow(self.data, aspect='auto')
-        axis.set_title(f"subject: {self.subject_id}'s {self.segment}-residual segment\n for {self.task}")
-        plt.colorbar(im, ax=axis)
-        
-        if not axis_given:
-            plt.show()
-            
-        return axis
-    
-    def plot_element_distribution(self, n_bins: int, axis: Optional[Axes]) -> Axes:
-        axis_given: bool = True
-        
-        if not axis:
-            axis_given = False
-            _, axis = plt.subplots()
-            
-            
-        im = axis.hist(self.data.flatten(), n_bins)
-        axis.set_title(f"subject: {self.subject_id}'s residual element distribution for\n{self.task}[{self.segment}]")
-        
-        if not axis_given:
-            plt.show()
-            
-        return axis
-    
-    def transform(self, transformation_function: Callable) -> "ResidualSegment":
-        data = transformation_function(self.data)
-
-        return ResidualSegment(info=SegmentInfo(data=data, 
-                                subject_id=self.subject_id, 
-                                task=self.task, 
-                                segment=self.segment))
-    
-    
-
-@dataclass
-class SegmentInfo:
-    """
-    This class helps out with transferring info from one datasegment to another
-    when trying to create a copy or new object based on the data of another one.
-
-    It should not be created manually ever.
-    """
-    data: ndarray
-    subject_id: int
-    task: str
-    segment: int
-    
-@dataclass
-class SegmentSummary:
-    min: float
-    max: float
-    shape: Tuple[int, int]
-    mean: float
-    std: float
-    segment: int
-    subject_id: int
-    task: str
-    
-def __str__(self) -> str:
-    return f"{self.subject_id}'s  {self.task} Segment {self.shape} w. min: {self.min}, max: {self.max} and mean: {self.mean}"
-    
