@@ -28,8 +28,11 @@ class BetweenTaskAnalysis:
         (__axes[1, 1], "task_working_memory", "working memory segment"),
     ]
 
-    def __init__(self, folder_path: str = AbsPathProvider().get_intra_train_path(), subject_id: Optional[int] = None, segment: int = 1) -> None:
+    def __init__(self, folder_path: str = AbsPathProvider().get_intra_train_path(), 
+                 subject_id: Optional[int] = None, 
+                 segment: int = 1) -> None:
         self.task_to_data_map: Dict[str, ndarray] = {}
+        self.task_to_segment_map: Dict[str, DataSegment] = {}
         self.segment: int = segment
         
         if subject_id:
@@ -46,6 +49,7 @@ class BetweenTaskAnalysis:
             else:
                 if dataSegment.get_segment() == segment:
                     self.task_to_data_map[dataSegment.get_task()] = dataSegment.get_data()
+                    self.task_to_segment_map[dataSegment.get_task()] = dataSegment
 
         return None
     
@@ -140,6 +144,20 @@ class BetweenTaskAnalysis:
         
         return None
     
+    def plot_residuals(self) -> None:
+        fig, axis = plt.subplots(2,2)
+        for idx, (task, segment) in enumerate(self.task_to_segment_map.items()):
+            row_idx: int = idx//2
+            column_idx: int = idx%2
+            
+            residual_segment: DataSegment = segment.get_residuals()
+            
+            axis[row_idx, column_idx] = residual_segment.plot(axis=axis[row_idx, column_idx])
+            
+        plt.show()
+        
+        return None
+        
     
 class WithinTaskAnalysis:
     def __init__(self, segments: List[DataSegment], task: str) -> None:
@@ -188,7 +206,9 @@ class WithinTaskAnalysis:
         computes the amount of rows and columns for the subplots function.
         This function computes the grid size needed to show everything as evenly as possible
         """
-        return ceil(sqrt(len(self)))    
+        return ceil(sqrt(len(self))) 
+    
+
      
 if __name__ == "__main__":
     from dl_assignment_2.data.dataFolderReader import DataFolderReader
@@ -198,7 +218,11 @@ if __name__ == "__main__":
     for task_type in TASK_TYPES:
         rest_data: List[DataSegment] = loader.get_data_for_specific_task(task_type)
         
-        dta: WithinTaskAnalysis = WithinTaskAnalysis(rest_data, task_type)
+        wta: WithinTaskAnalysis = WithinTaskAnalysis(rest_data, task_type)
+        bta: BetweenTaskAnalysis = BetweenTaskAnalysis()
         #dta.plot_all_segments()
-        dta.plot_all_segments_concatenated()
-        print(dta)
+        #dta.plot_all_segments_concatenated()
+        #wta.plot_res
+        #print(wta)
+        
+        bta.plot_residuals()

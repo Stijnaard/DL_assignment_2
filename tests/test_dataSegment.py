@@ -1,7 +1,7 @@
 from dl_assignment_2.data.data_config import INTRA_TRAIN
 from dl_assignment_2.data.dataSegment import DataSegment, DataSegmentInfo
 
-from numpy import ndarray, all
+from numpy import array, ndarray, all
 
 indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
 
@@ -49,7 +49,7 @@ class Test_Path_Stuff:
         z: DataSegment = self.x.trim_n_rows(n=13)
         assert z.data.shape[1] == 35624//13
 
-from numpy import array, all
+
 class Test_residual:
     test_matrix: ndarray = array([[1,2,4], 
                                   [4,7,11]])
@@ -57,7 +57,6 @@ class Test_residual:
     
     def test_residual_correctness(self):
         residual_x: DataSegment = self.x.get_residuals()
-        
         assert all(residual_x.data == array([[1,2],
                                          [3,4]]))
         

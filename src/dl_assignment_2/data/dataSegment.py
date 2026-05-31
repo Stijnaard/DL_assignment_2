@@ -4,7 +4,7 @@ import h5py
 from h5py import File
 from numpy import ndarray, array, delete, zeros, concatenate
 import matplotlib.pyplot as plt
-from matplotlib import axes
+from matplotlib.axes import Axes
 
 from typing import Tuple, Callable, Optional
 from dataclasses import dataclass
@@ -51,10 +51,21 @@ class DataSegment:
 
     # all the analytical functions:
     ###############################
-    def plot(self) -> None:
-        plt.imshow(self.data, aspect='auto')
-        plt.show()
-        return None
+    def plot(self, axis: Optional[Axes] = None) -> Axes:
+        axis_given: bool = True
+        
+        if not axis:
+            axis_given = False
+            _, axis = plt.subplots()
+            
+        im = axis.imshow(self.data, aspect='auto')
+        axis.set_title(f"residual plot with max residual: {self.data.max()}\nand min residual: {self.data.min()}")
+        plt.colorbar(im, ax=axis)
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis
     
     def trim_n_rows(self, n: int = 3) -> "DataSegment":
         "removes all rows but every N one"
