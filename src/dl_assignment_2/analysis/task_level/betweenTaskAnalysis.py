@@ -50,6 +50,8 @@ class BetweenTaskAnalysis:
                 axis[row_idx, column_idx] = segment.plot(axis=axis[row_idx, column_idx]) 
             elif way == "hist":
                 axis[row_idx, column_idx] = segment.plot_element_distribution(n_bins, axis[row_idx,column_idx])
+            elif way == "lines":
+                axis[row_idx, column_idx] = segment.plot_as_lines(axis=axis[row_idx, column_idx])
         plt.show()
     
     def summarize(self) -> None:
@@ -75,6 +77,7 @@ class BetweenTaskAnalysis:
             
         return None
     
+    
 
             
     
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     bta.summarize()
     #bta.plot()
     #bta.plot(way="hist")
-    
+    bta.plot(way="lines")
     print("\n\n")
     
     bta.get_residuals()

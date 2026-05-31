@@ -2,6 +2,7 @@ from dl_assignment_2.data.data_config import INTRA_TRAIN
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo, SegmentSummary
 
 from numpy import array, ndarray, all, zeros
+import pytest
 
 indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
 
@@ -46,8 +47,6 @@ class Test_trim:
     indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
     x: DataSegment = DataSegment(indirect_path)
     
-
-    
     def test_trim_shape_reduction(self):
         y: DataSegment = self.x.trim(n=2)
         assert y.data.shape[1] == 35624//2
@@ -66,7 +65,37 @@ class Test_trim:
         y: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
         
         assert y.trim(5).shape == (5,3)
+
+class Test_slice:
+    test_matrix: ndarray = array([[1,2],
+                                  [3,4],
+                                  [5,6],
+                                  [7,8]])
+    
+    test_matrix2: ndarray = array([[1,2,3],
+                                   [4,5,6],
+                                   [7,8,9]])
+    x1: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
+    x2: DataSegment = DataSegment(info=SegmentInfo(test_matrix2, 123456, "rest", 1))
+
+    def test_correctness(self):
+        y: DataSegment = self.x1.slice(start=1, stop=2)
+        assert all(y.data == array([3,4], [5,6]))
         
+    def test_w_negative_indices(self):
+        y = self.x1.slice(start=2, stop=-1)
+        assert all(y.data == array([5,6], [7,8]))
+
+    def test_w_columns(self):
+        y = self.x2.slice(start=1,end=2)
+        assert all(y.data == array([[2,3], [5,6], [8,9]]))
+  
+    def test_error_start_gt_stop(self):
+        with pytest.raises(ValueError):
+            self.x2.slice(start=2, end=1)
+
+
+
         
 
 

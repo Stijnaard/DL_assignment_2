@@ -84,12 +84,30 @@ class DataSegment:
             _, axis = plt.subplots()
             
             
-        im = axis.hist(self.data.flatten(), n_bins)
+        axis.hist(self.data.flatten(), n_bins)
         axis.set_title(f"subject: {self.subject_id}'s element distribution for\n{self.task}[{self.segment}]")
         
         if not axis_given:
             plt.show()
             
+        return axis
+    
+    def plot_as_lines(self, axis: Optional[Axes] = None) -> Axes:
+        """Plots the data as lines, with each line representing a sensor's measurements."""
+        axis_given: bool = True
+
+        if not axis:
+            axis_given = False
+            _, axis = plt.subplots()
+
+        for column_idx in range(self.data.shape[1]):
+            column: ndarray = self.data[:,column_idx].flatten()
+            axis.plot(range(len(column)), column)
+            axis.set_title(f"{self.task}[{self.segment}]")
+
+        if not axis_given:
+            plt.show()
+
         return axis
     
     def trim(self, n: int = 3) -> "DataSegment":
