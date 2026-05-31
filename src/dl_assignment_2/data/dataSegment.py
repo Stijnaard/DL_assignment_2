@@ -54,6 +54,27 @@ class DataSegment:
                             subject_id=self.subject_id, 
                             task=self.task, 
                             segment=self.segment))
+    
+    def slice(self, start: int, end: int, axis: int = 0) -> DataSegment:
+        if end > 0 and start > end:
+            raise ValueError("start must be less than, or equal to end.")
+        
+        
+        if end == -1:
+            end = self.data.shape[0] if axis == 0 else self.data.shape[1]
+        else:
+            end+=1
+
+        if axis == 0:
+            sliced_data: ndarray = self.data[start:end, :]
+        elif axis == 1:
+            sliced_data: ndarray = self.data[:, start:end]
+        else:
+            raise ValueError(f"axis can only be 1 or 0; not: {axis}")
+
+        return DataSegment(info=SegmentInfo(sliced_data, self.subject_id, self.task, self.segment))
+
+
 
     # all the analytical functions:
     ###############################

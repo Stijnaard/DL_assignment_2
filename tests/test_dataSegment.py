@@ -79,15 +79,23 @@ class Test_slice:
     x2: DataSegment = DataSegment(info=SegmentInfo(test_matrix2, 123456, "rest", 1))
 
     def test_correctness(self):
-        y: DataSegment = self.x1.slice(start=1, stop=2)
-        assert all(y.data == array([3,4], [5,6]))
+        y: DataSegment = self.x1.slice(start=1, end=2)
+        assert all(y.data == array([[3,4], [5,6]]))
         
-    def test_w_negative_indices(self):
-        y = self.x1.slice(start=2, stop=-1)
-        assert all(y.data == array([5,6], [7,8]))
+    def test_w_negative_one_indices(self):
+        y = self.x1.slice(start=2, end=-1)
+        assert all(y.data == array([[5,6], [7,8]]))
+
+    def test_w_negative_n_indices(self):
+        y = self.x1.slice(start=0, end=-2)
+        assert all(y.data == array([[1,2], [3,4], [5,6]]))
+
+    def test_w_start_eq_end(self):
+        y = self.x1.slice(start=1, end=1)
+        assert all(y.data == array([[3,4]]))
 
     def test_w_columns(self):
-        y = self.x2.slice(start=1,end=2)
+        y = self.x2.slice(start=1,end=2, axis=1)
         assert all(y.data == array([[2,3], [5,6], [8,9]]))
   
     def test_error_start_gt_stop(self):
@@ -126,6 +134,3 @@ class Test_summary:
         
     def test_mean(self):
         assert self.summary.mean == 29/6
-        
-        
-        
