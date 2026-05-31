@@ -29,7 +29,7 @@ class DataSegment:
     task: str
     segment: int
 
-    def __init__(self, relative_path: Optional[str] = None, dataSegmentInfo: DataSegmentInfo = None) -> None:
+    def __init__(self, relative_path: Optional[str] = None, dataSegmentInfo: Optional["DataSegmentInfo"] = None) -> None:
         #//>>
         if relative_path:
             self._construct_segment_from_file(relative_path)
@@ -40,7 +40,7 @@ class DataSegment:
         
         return None
 
-    def _construct_segment_from_DataSegmentInfo(self, dataSegmentInfo: DataSegmentInfo) -> None:
+    def _construct_segment_from_DataSegmentInfo(self, dataSegmentInfo: "DataSegmentInfo") -> None:
         self.data: ndarray = dataSegmentInfo.data
         self.subject_id: int = dataSegmentInfo.subject_id
         self.task: str = dataSegmentInfo.task
@@ -60,7 +60,7 @@ class DataSegment:
     def __repr__(self) -> str:
         return f"data segment concerning subject: {self.subject_id} for task: {self.task} at segment: {self.segment}."
     
-    def transform(self, transformation_function: Callable) -> None:
+    def transform(self, transformation_function: Callable) -> "DataSegment":
         data = transformation_function(self.data)
 
         return DataSegment(dataSegmentInfo=DataSegmentInfo(data=data, 
