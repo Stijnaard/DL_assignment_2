@@ -1,5 +1,5 @@
 from dl_assignment_2.data.data_config import INTRA_TRAIN
-from dl_assignment_2.data.dataSegment import DataSegment
+from dl_assignment_2.data.dataSegment import DataSegment, DataSegmentInfo
 
 from numpy import ndarray, all
 
@@ -48,3 +48,17 @@ class Test_Path_Stuff:
 
         z: DataSegment = self.x.trim_n_rows(n=13)
         assert z.data.shape[1] == 35624//13
+
+from numpy import array, all
+class Test_residual:
+    test_matrix: ndarray = array([[1,2,4], 
+                                  [4,7,11]])
+    x: DataSegment = DataSegment(dataSegmentInfo=DataSegmentInfo(test_matrix, 123456, "rest", 1))
+    
+    def test_residual_correctness(self):
+        residual_x: DataSegment = self.x.get_residuals()
+        
+        assert all(residual_x.data == array([[1,2],
+                                         [3,4]]))
+        
+        

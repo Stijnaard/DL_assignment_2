@@ -2,7 +2,7 @@
 #//>>
 import h5py
 from h5py import File
-from numpy import ndarray, array, delete
+from numpy import ndarray, array, delete, zeros, concatenate
 import matplotlib.pyplot as plt
 
 from typing import Tuple, Callable, Optional
@@ -172,6 +172,29 @@ class DataSegment:
         return list(set(range(self.data.shape[1])).difference(indices_to_keep))
 
 
+    def get_residuals(self) -> "DataSegment":
+        """Computes matrix where each column i consists of the difference
+        between the the columns i and i+1 of the DataSegment's data
+        """
+        
+        
+        
+        # 1. construct the right-shifted copy of the data:
+        copy_without_final_column: ndarray = self.data.copy()[:,:-1]
+        padded_right_shifted_copy: ndarray = concatenate((padding_column, copy_without_final_column), axis=1)
+        
+        # 2. construct the padding column:
+        row_amount: int = self.data.shape[0]
+        padding_column: ndarray = zeros(shape=(row_amount, 1))
+        
+        # 3. construct the residuals:
+        padded_residuals: ndarray = self.data - padded_right_shifted_copy
+        
+        # 4. remove the padded first column
+        unpadded_residuals: ndarray = padded_residuals[:,1:]
+        
+        return DataSegment(dataSegmentInfo=DataSegmentInfo(unpadded_residuals, self.subject_id, self.task, self.segment))
+
 
 
 @dataclass
@@ -186,3 +209,4 @@ class DataSegmentInfo:
     subject_id: int
     task: str
     segment: int
+    
