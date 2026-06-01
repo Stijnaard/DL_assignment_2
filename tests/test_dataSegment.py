@@ -134,3 +134,35 @@ class Test_summary:
         
     def test_mean(self):
         assert self.summary.mean == 29/6
+
+class TestSplit:
+
+    test_matrix: ndarray = array([[1,2,3,4],
+                                  [5,6,7,8],
+                                  [9,10,11,12],
+                                  [13, 14, 15, 16]])
+    
+    x: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123466, "rest", 1))
+
+    def test_correct_column_split(self):
+        y, z = self.x.split(n = 2, axis=1)
+
+        assert all(y.data==array([[1,2], [5,6], [9,10], [13, 14]]))
+        assert all(z.data == array([[3,4], [7,8], [11, 12], [15, 16]]))
+
+    def test_correct_row_split(self):
+        y, z = self.x.split(n=2, axis=0)
+
+        assert all(y.data == array([[1,2,3,4], [5,6,7,8]]))
+        assert all(z.data == array([[9,10,11,12], [13, 14, 15, 16]]))
+
+    def test_error_when_uneven(self):
+        test_matrix = array(range(1,26)).reshape((5,5))
+        x = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
+
+        with pytest.raises(ValueError):
+            y, z= x.split(n=2, axis=0)
+
+
+
+

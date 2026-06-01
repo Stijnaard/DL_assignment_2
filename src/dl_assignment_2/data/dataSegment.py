@@ -282,3 +282,29 @@ class DataSegment:
                               segment=self.segment,
                               subject_id=self.subject_id,
                               task=self.task)
+    
+    def split(self, n: int = 2, axis: int = 0) -> list[DataSegment]:
+        # 1. make sure the data can be splitted equally:
+        remainder: int = self.data.shape[axis] % n
+        if remainder != 0:
+            raise ValueError(f"could not perform split equally. {self.data.shape[axis]} is not divisible by {n}")
+
+        step_size: int = self.data.shape[axis] // n
+        prev_step: int = 0
+        data_splits: list[ndarray] = []
+
+        for step in range(1, n+1):
+            if axis==0:
+                slice: ndarray = self.data[prev_step*step_size:step*step_size, :]
+            elif axis==1:
+                slice: ndarray = self.data[:, prev_step*step_size:step*step_size]
+
+            prev_step+=1
+
+            data_splits.append(slice)
+
+        segments: list[DataSegment] = [DataSegment(info=SegmentInfo(split, self.subject_id, self.task, self.segment)) for split in data_splits]
+
+        for segment in segments:
+            print(segment.data)
+        return segments
