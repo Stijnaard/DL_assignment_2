@@ -10,8 +10,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 
 from src.config.config import *
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # 1. Assign labeles to the .h5 data
 def get_label(filepath: Path) -> int:
@@ -128,7 +126,7 @@ class MEGDataset(Dataset):
 
 # Build the DataLoaders from .h5 files
 def get_files(folder: Path) -> list[Path]:
-    """Return all .h5 files in a folder, sorted"""
+    """Return all .h5 files in a folder"""
     files = sorted(folder.glob("*.h5"))
     if not files:
         raise FileNotFoundError(f"No .h5 files found in {folder}")

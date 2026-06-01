@@ -10,7 +10,7 @@ MODEL_DISPLAY = {
     "cnn1d":           "CNN-1D",
     "cnn_transformer": "CNN+Transformer",
 }
-MODEL = "gru" # Default model if none selected
+MODEL = "cnn1d" # Default model if none selected
 
 # Clasification lables
 LABELS = ["rest", "task_motor", "task_story_math", "task_working_memory"]

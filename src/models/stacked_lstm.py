@@ -8,9 +8,7 @@ roughly 2x the parameters.
 
 import torch
 import torch.nn as nn
-
-from src.config.config import (WINDOW_SIZE, STACKED_NUM_LAYERS,
-    STACKED_HIDDEN_SIZE, STACKED_DROPOUT_RATE)
+from src.config.config import *
 
 class StackedLSTM(nn.Module):
     """

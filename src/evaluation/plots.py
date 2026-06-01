@@ -21,11 +21,8 @@ import matplotlib.ticker as mticker
 
 from src.config.config import LABELS, FIGURES_DIR, RESULTS_DIR
 
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
 # Constants
-PALETTE = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B2"]
+PALETTE = ["#416AAD", "#D27B49", "#55AE6A", "#C24B4F", "#7A69B2"]
 LABEL_MAP = {
     "rest":                "Rest",
     "task_motor":          "Motor",

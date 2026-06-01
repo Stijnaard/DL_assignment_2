@@ -6,11 +6,7 @@ Probably weak due to the fact that RNN:
 
 import torch
 import torch.nn as nn
-from src.config.config import (
-    NUM_CLASSES, RNN_HIDDEN, RNN_LAYERS, RNN_DROPOUT, RNN_BIDIR)
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config.config import *
 
 class RNNClassifier(nn.Module):
     def __init__(self):

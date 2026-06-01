@@ -167,7 +167,7 @@ def train(
     print(f"\n--Device       : {DEVICE}")
     print(f"--Model        : {model_name}  ({parameters_amount:,} parameters)")
     print(f"--Experiment   : {experiment}")
-    print(f"--Epochs (max) : {epochs}  |  Patience: {patience}")
+    print(f"--Epochs (max) : {epochs} with Patience: {patience}")
 
     optimizer, scheduler, criterion = setup_training(
         model, lr, weight_decay, epochs, label_smoothing)
@@ -197,9 +197,9 @@ def train(
             lr_now = optimizer.param_groups[0]["lr"]
             print(
                 f"  Epoch {epoch:3d}/{epochs}"
-                f"  | train loss {train_loss:.4f}  acc {train_acc:.3f}"
-                f"  | val loss {val_loss:.4f}  acc {val_acc:.3f}"
-                f"  | lr {lr_now:.2e}"
+                f"  - train loss {train_loss:.4f}  acc {train_acc:.3f}"
+                f"  - val loss {val_loss:.4f}  acc {val_acc:.3f}"
+                f"  - lr {lr_now:.2e}"
             )
 
         # Early stopping and model saving
@@ -296,8 +296,8 @@ def train_chunked(
         if epoch % 5 == 0 or epoch == 1:
             print(
                 f"Epoch {epoch:3d}/{epochs}"
-                f"  | train loss {train_loss:.4f}  acc {train_acc:.3f}"
-                f"  | val loss {val_loss:.4f}  acc {val_acc:.3f}"
+                f"  - train loss {train_loss:.4f}  acc {train_acc:.3f}"
+                f"  - val loss {val_loss:.4f}  acc {val_acc:.3f}"
             )
 
         # Early stopping and model saving

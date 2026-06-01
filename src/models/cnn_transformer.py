@@ -12,13 +12,7 @@ Theoretically the best, since
 import math
 import torch
 import torch.nn as nn
-from src.config.config import (
-    NUM_CLASSES, N_CHANNELS,
-    CNNTRANS_CNN_CHANNELS, CNNTRANS_D_MODEL, CNNTRANS_NHEAD,
-    CNNTRANS_LAYERS, CNNTRANS_DIM_FF, CNNTRANS_DROPOUT)
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config.config import *
 
 # 1. CNN frontend
 class CNNFrontend(nn.Module):
@@ -38,7 +32,7 @@ class CNNFrontend(nn.Module):
         for ch in cnn_channels:
             layers += [
                 nn.Conv1d(prev_ch, ch, kernel_size = kernel,
-                          padding = kernel // 2, bias = False),
+                    padding = kernel // 2, bias = False),
                 nn.BatchNorm1d(ch),
                 nn.GELU(),
                 nn.Dropout(dropout),

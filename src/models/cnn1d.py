@@ -15,11 +15,7 @@ Con: not so good at very long-range
 """
 
 import torch.nn as nn
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.config.config import (N_CHANNELS, NUM_CLASSES,
-    CNN1D_CHANNELS, CNN1D_KERNEL, CNN1D_DROPOUT)
+from src.config.config import *
 
 class Conv1DBlock(nn.Module):
     """One convolutional block: Conv -> BatchNorm -> GELU -> Dropout"""
@@ -27,9 +23,9 @@ class Conv1DBlock(nn.Module):
         super().__init__()
         self.block = nn.Sequential(
             nn.Conv1d(in_ch, out_ch,
-                      kernel_size = kernel,
-                      padding = kernel // 2,
-                      bias = False),
+                kernel_size = kernel,
+                padding = kernel // 2,
+                bias = False),
             nn.BatchNorm1d(out_ch),
             nn.GELU(),
             nn.Dropout(dropout))

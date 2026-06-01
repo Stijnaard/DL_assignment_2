@@ -12,11 +12,7 @@ learned so the model focuses on the most informative time points.
 
 import torch
 import torch.nn as nn
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.config.config import (
-    NUM_CLASSES, GRU_HIDDEN, GRU_LAYERS, GRU_DROPOUT, GRU_BIDIR)
+from src.config.config import *
 
 class AttentionPool(nn.Module):
     """

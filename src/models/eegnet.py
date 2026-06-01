@@ -15,12 +15,7 @@ Pro's: few parameters
 
 import torch
 import torch.nn as nn
-from src.config.config import (
-    NUM_CLASSES, WINDOW_SIZE, N_CHANNELS,
-    EEGNET_F1, EEGNET_F2, EEGNET_KERNEL_SIZE, EEGNET_DROPOUT)
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config.config import *
 
 class EEGNet(nn.Module):
     def __init__(self):
@@ -56,8 +51,8 @@ class EEGNet(nn.Module):
         # Refines temporal features in a compute-efficient way
         self.block3 = nn.Sequential(
             nn.Conv2d(EEGNET_F2, EEGNET_F2, kernel_size = (1, 16), padding = (0, 8),
-                      groups = EEGNET_F2, bias = False),                         # Depthwise temporal
-            nn.Conv2d(EEGNET_F2, EEGNET_F2, kernel_size = (1, 1), bias = False), # pointwise mix
+                groups = EEGNET_F2, bias = False), # Depthwise temporal
+            nn.Conv2d(EEGNET_F2, EEGNET_F2, kernel_size = (1, 1), bias = False), # Pointwise mix
             nn.BatchNorm2d(EEGNET_F2),
             nn.ELU(),
             nn.AvgPool2d(kernel_size = (1, 8)),
