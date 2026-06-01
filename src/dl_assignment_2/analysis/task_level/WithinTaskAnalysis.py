@@ -17,24 +17,30 @@ class WithinTaskAnalysis:
     subject: int
     task: str
 
-    def __init__(self, abs_folder_path: str = AbsPathProvider.get_intra_train_path(), task: Optional[str] = None, subject: Optional[int] = None) -> None:
+    def __init__(self, abs_folder_path: Optional[str] = None, segments: list[DataSegment] = None, task: Optional[str] = None, subject: Optional[int] = None) -> None:
         # 0. init everything:
         self.segments: list[DataSegment] = []
         self.subject = subject
         self.task = task
 
-        # 1. Go over each file and:
-        self._construct_segments(abs_folder_path, task, subject)
+        # 1. construct the segments:
+        if abs_folder_path:
+            self.segments = self._construct_segments_from_folder(abs_folder_path, task, subject)
+        elif segments:
+            self.segments = segments
+        else:
+            raise ValueError("abs_folder_path or segments must be given")
 
-        # 4. sort the segments in ascending order on segment:
-        self.segments = sorted(self.segments)
+        # 2. sort the segments in ascending order on segment:
+        self.segments = sorted(self.segments, key=lambda x: x.get_segment())
 
-        # 5. construct the full segment:
+        # 3. construct the full segment:
         self._construct_full_segment()
 
         return None
 
-    def _construct_segments(self, abs_folder_path, task, subject):
+    def _construct_segments_from_folder(self, abs_folder_path, task, subject) -> list[DataSegment]:
+        segments: list[DataSegment] = []
         for file in scandir(abs_folder_path):
             # 2. get the metadata:
             file_task, file_subject, _ = DataSegment._get_metadata_from_filename(file.name)
@@ -43,7 +49,11 @@ class WithinTaskAnalysis:
             if file_task == task and file_subject == subject:
                 abs_file_path: str = self.app.get_abs_path_to_segment_file(abs_folder_path, file.name)
                 ds: DataSegment = DataSegment(abs_file_path)
-                self.segments.append(ds)
+                segments.append(ds)
+
+        return segments
+
+            
     
     def _construct_full_segment(self) -> None:
         """constructs the full segment where the data from all DataSegments get concatenated column-wise."""
@@ -54,8 +64,11 @@ class WithinTaskAnalysis:
         concatenated_data: ndarray = concatenate(all_data, axis=1)
         
         # 3. construct the full segment:
-        self.full_segment: DataSegment = DataSegment(SegmentInfo(concatenated_data, self.subject, self.task, -1))
+        self.full_segment: DataSegment = DataSegment(info=SegmentInfo(concatenated_data, self.subject, self.task, -1))
 
         return None
+
+    
+    
 
 
