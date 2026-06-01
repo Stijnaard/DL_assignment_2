@@ -18,14 +18,15 @@ class BetweenTaskAnalysis:
         self.task_to_segment: dict[str, DataSegment] = {}
         self.folder_path: str = folder_path
         self.segment: int = wanted_segment
+        
         for file in scandir(folder_path):
             task: str
             segment: int # type: ignore[assignment]
             task, _, segment = DataSegment._get_metadata_from_filename(file.name) # type: ignore[assignment]
             
             if segment == wanted_segment:
-                
-                segment: DataSegment = DataSegment(self.abp.get_abs_path_to_segment_file(self.abp.get_intra_train_path(), file.name))
+                abs_file_path: str = self.abp.get_abs_path_to_segment_file(self.abp.get_intra_train_path(), file.name)
+                segment: DataSegment = DataSegment(abs_file_path)
                 self.task_to_segment[task] = segment
                 
         return None
@@ -76,14 +77,8 @@ class BetweenTaskAnalysis:
             self.task_to_segment[task] = trimmed_segment
             
         return None
-    
-    
 
-            
-    
-        
-            
-            
+
 if __name__ == "__main__":
     bta = BetweenTaskAnalysis()
     bta.trim(100)

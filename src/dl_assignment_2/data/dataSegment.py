@@ -48,6 +48,7 @@ class DataSegment:
         return None
     
     def transform(self, transformation_function: Callable) -> "DataSegment":
+        """applies a transformation function to the data and returns a transformed DataSegment as a result."""
         data = transformation_function(self.data)
 
         return DataSegment(info=SegmentInfo(data=data, 
@@ -56,15 +57,19 @@ class DataSegment:
                             segment=self.segment))
     
     def slice(self, start: int, end: int, axis: int = 0) -> DataSegment:
+        """Only keeps the rows/column that fall within the range from start to (and including) end."""
+
+        # 1. make sure start- and end numbers are valid:
         if end > 0 and start > end:
             raise ValueError("start must be less than, or equal to end.")
         
-        
+        # 2. correct the end number to accept the final data point too:
         if end == -1:
             end = self.data.shape[0] if axis == 0 else self.data.shape[1]
         else:
             end+=1
-
+        
+        # 3. compute the slide:
         if axis == 0:
             sliced_data: ndarray = self.data[start:end, :]
         elif axis == 1:
@@ -72,6 +77,7 @@ class DataSegment:
         else:
             raise ValueError(f"axis can only be 1 or 0; not: {axis}")
 
+        # 4. return the sliced version as a DataSegment
         return DataSegment(info=SegmentInfo(sliced_data, self.subject_id, self.task, self.segment))
 
 
@@ -259,13 +265,16 @@ class DataSegment:
         #//<<
         
     def _compute_indices_to_keep(self, step) -> list[int]:
+        """helper function for trim that computes what indices to keep.
+        If you don't care about the exact implementation of trim you should ignore this method."""
         start = step-1
         indices_to_keep = [start]
-
         s = 1
+
         while indices_to_keep[-1] < self.data.shape[1]:
             indices_to_keep.append(start + step*s)
             s+=1
+        
         indices_to_keep.pop()
 
         return indices_to_keep
@@ -284,6 +293,7 @@ class DataSegment:
                               task=self.task)
     
     def split(self, n: int = 2, axis: int = 0) -> list[DataSegment]:
+        """Splits the DataSegment into smaller, equal DataSegments"""
         # 1. make sure the data can be splitted equally:
         remainder: int = self.data.shape[axis] % n
         if remainder != 0:
