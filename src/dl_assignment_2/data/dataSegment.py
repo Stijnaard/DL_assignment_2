@@ -308,7 +308,8 @@ class DataSegment:
                 slice: ndarray = self.data[prev_step*step_size:step*step_size, :]
             elif axis==1:
                 slice: ndarray = self.data[:, prev_step*step_size:step*step_size]
-
+            else:
+                raise ValueError("axis must be either 0 or 1.")
             prev_step+=1
 
             data_splits.append(slice)
