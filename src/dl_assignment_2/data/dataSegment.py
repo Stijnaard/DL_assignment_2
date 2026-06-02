@@ -153,7 +153,7 @@ class DataSegment:
         return DataSegment(info=SegmentInfo(trimmed_data, self.subject_id, self.task, self.segment))
 
         
-    def get_residuals(self) -> "ResidualSegment":
+    def get_residuals(self) -> "ResidualSegment":   # ignore
         """Computes matrix where each column i consists of the difference
         between the the columns i and i+1 of the DataSegment's data
         """
