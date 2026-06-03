@@ -1,11 +1,11 @@
-from dl_assignment_2.modeling.loader import CustomDataset
+from dl_assignment_2.modeling.dataset import CustomDataset
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo
 
 from numpy import ndarray, array
 from torch.utils.data import DataLoader
 from torch import tensor, all
 
-class Test_Dataset_single_instances:
+class Base_TestDataset:
     m1: ndarray = array([[1,2,3,4], [5,6,7,8]])
     m2: ndarray = m1*-1
 
@@ -13,9 +13,9 @@ class Test_Dataset_single_instances:
     s2: DataSegment = DataSegment(info=SegmentInfo(m2, 123456, "task_motor", 1))
 
     ds: CustomDataset = CustomDataset((s1, s2))
+    dl: DataLoader = DataLoader(ds, 2)
 
-
-
+class Test_Dataset_single_instances(Base_TestDataset):
     def test_correct_feature_matrix(self):
         x, _ = self.ds.__getitem__(0)
         assert all(x == tensor([[1,2,3,4], [5,6,7,8]]))
@@ -28,16 +28,7 @@ class Test_Dataset_single_instances:
     def test_correct_length(self):
         assert len(self.ds) == 2
 
-class Test_Dataset_Batches:
-    m1: ndarray = array([[1,2,3,4], [5,6,7,8]])
-    m2: ndarray = m1*-1
-
-    s1: DataSegment = DataSegment(info=SegmentInfo(m1, 123456, "rest", 1))
-    s2: DataSegment = DataSegment(info=SegmentInfo(m2, 123456, "task_motor", 1))
-
-    ds: CustomDataset = CustomDataset((s1, s2))
-    dl: DataLoader = DataLoader(ds, 2)
-
+class Test_Dataset_Batches(Base_TestDataset):
     def test_correct_feature_batch(self):
         for X, _ in self.dl:
             assert all(X == tensor([[[1,2,3,4], 

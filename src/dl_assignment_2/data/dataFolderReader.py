@@ -52,7 +52,7 @@ class FolderDataReader:
 
     def get_all_segments(self) -> list[DataSegment]:
         all_segments: list[DataSegment] = []
-        
+
         for subjectData in self.id_to_subjectData_map.values():
             all_segments.extend(subjectData.get_all_segments())
 
@@ -111,5 +111,4 @@ class ManualDataReader(FolderDataReader):
                 sd = SubjectData(segment.get_subject_id(), [])
                 sd.add_segment(segment)
                 self.id_to_subjectData_map[segment.get_subject_id()] = sd
-
 
