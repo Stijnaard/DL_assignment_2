@@ -8,7 +8,11 @@ from torch.utils.data import Dataset
 
 class CustomDataset(Dataset):
     def __init__(self, segments: Sequence[DataSegment], pipeline: Optional[Pipeline] = None) -> None:
-        pass
+        if pipeline:
+            for segment in segments:
+                segment = pipeline(segment)
+        
+        
 
     def __len__(self) -> int:
         pass

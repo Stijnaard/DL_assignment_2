@@ -15,6 +15,7 @@ class Test_Pipeline:
 
     def test_correct_transformation(self):
         assert all(self.transformed_segment.data == array([[3*10**12], [7*10**12]]))
-    
+
+
     
 
