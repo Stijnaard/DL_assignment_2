@@ -5,7 +5,7 @@ from dl_assignment_2.data.data_config import INTRA_TRAIN
 
 from typing import List
 
-from numpy import array, ndarray
+from numpy import array, ndarray, all
 
 class Test_DataFolderReader:
     x: FolderDataReader = FolderDataReader()
@@ -43,3 +43,5 @@ class Test_TestDataReader:
         subject_one_data: SubjectData = self.x.get_subjectData(1)
         rest_data: list[DataSegment] = subject_one_data.get_data_for_task("rest")
 
+        assert all(rest_data[0].data == array([[1,2], [3,4]]))
+        assert all(rest_data[1].data == array([[1,3], [2,4]]))
