@@ -9,3 +9,4 @@ class BaseModel(nn.Module, ABC):
     @abstractmethod
     def forward(self, x):
         pass
+
