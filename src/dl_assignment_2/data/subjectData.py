@@ -33,6 +33,9 @@ class SubjectData:
         return self.subject_id
         #//<<
 
+    def get_all_segments(self) -> list[DataSegment]:
+        return self.data_segments
+
     def _check_data_ownership(self) -> None:
         #//>>
         for dataSegment in self.data_segments:

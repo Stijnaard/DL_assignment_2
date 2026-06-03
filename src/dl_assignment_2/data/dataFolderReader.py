@@ -50,6 +50,14 @@ class FolderDataReader:
         return None
         #//<<
 
+    def get_all_segments(self) -> list[DataSegment]:
+        all_segments: list[DataSegment] = []
+        
+        for subjectData in self.id_to_subjectData_map.values():
+            all_segments.extend(subjectData.get_all_segments())
+
+        return all_segments
+
     def get_subjectData(self, subject_id: int) -> SubjectData:
         #//>>
         if subject_id in self.id_to_subjectData_map:
@@ -94,9 +102,11 @@ class ManualDataReader(FolderDataReader):
     In production you should not be using this at all."""
     def __init__(self, segments: list[DataSegment]) -> None:
         self.id_to_subjectData_map = {}
+
         for segment in segments:
-            if segment.get_subject_id() in self.id_to_subjectData_map:
+            if  segment.get_subject_id() in self.id_to_subjectData_map:
                 self.id_to_subjectData_map[segment.get_subject_id()].add_segment(segment)
+
             else:
                 sd = SubjectData(segment.get_subject_id(), [])
                 sd.add_segment(segment)

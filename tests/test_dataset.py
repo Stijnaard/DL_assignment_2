@@ -25,6 +25,8 @@ class Test_Dataset_single_instances:
         _, y = self.ds.__getitem__(0)
         assert y == 0   # 0 = rest (moves alphabetically)
 
+    def test_correct_length(self):
+        assert len(self.ds) == 2
 
 class Test_Dataset_Batches:
     m1: ndarray = array([[1,2,3,4], [5,6,7,8]])
@@ -50,6 +52,5 @@ class Test_Dataset_Batches:
         for X, _ in self.dl:
             assert X.shape == (2,2,4)
 
-    def 
 
     
