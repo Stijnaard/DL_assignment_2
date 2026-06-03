@@ -44,7 +44,7 @@ class SubjectData:
 
     def get_data_for_task(self, task: str) -> List[DataSegment]:
         #//>>
-        """returns only the DataSegments that are related to a particular task:
+        """returns only the DataSegments that are related to a particular task in a sorted (ascending manner).
 
         Args:
             task: string representation of the task at hand.

@@ -5,7 +5,7 @@ from dl_assignment_2.data.data_config import TASK_TYPES, INTRA_TRAIN
 from typing import Dict, List, Iterable
 from os import scandir
 
-class DataFolderReader:
+class FolderDataReader:
     """
     This class reads a whole folder of datasets and distributes the datasets over test subjects.
     This mapping is kept in the id_to_subjectData_map.
@@ -19,8 +19,8 @@ class DataFolderReader:
         The SubjectData object tied to its respective subject ID represents the set of datasets/segments available for that person.
     """
     
-    id_to_subjectData_map: Dict[int, SubjectData] = {}
-    subject_data: List[SubjectData] = []
+    id_to_subjectData_map: Dict[int, SubjectData]
+    subject_data: List[SubjectData]
 
     def __init__(self, root_folder: str = INTRA_TRAIN) -> None:
         #//>>
@@ -76,7 +76,6 @@ class DataFolderReader:
         
         return None
     
-
     def get_subjects(self) -> List[int]:
         return list(self.id_to_subjectData_map.keys())
 
@@ -88,3 +87,19 @@ class DataFolderReader:
 
     def __getitem__(self, idx) -> SubjectData:
         return self.subject_data[idx]
+
+
+class ManualDataReader(FolderDataReader):
+    """This Datareader serves as a testing equivalent of the FolderDataReader.
+    In production you should not be using this at all."""
+    def __init__(self, segments: list[DataSegment]) -> None:
+        self.id_to_subjectData_map = {}
+        for segment in segments:
+            if segment.get_subject_id() in self.id_to_subjectData_map:
+                self.id_to_subjectData_map[segment.get_subject_id()].add_segment(segment)
+            else:
+                sd = SubjectData(segment.get_subject_id(), [])
+                sd.add_segment(segment)
+                self.id_to_subjectData_map[segment.get_subject_id()] = sd
+
+
