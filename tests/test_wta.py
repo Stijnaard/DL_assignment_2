@@ -19,3 +19,5 @@ class Test_Instantiation:
         assert all(wta.full_segment.data == array([[1,2,3], [1,2,3], [1,2,3]])) 
 
         
+
+        

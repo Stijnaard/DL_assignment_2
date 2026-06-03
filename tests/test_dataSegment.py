@@ -44,15 +44,19 @@ class Test_Path_Stuff:
         assert all(self.x.data) and (not all(y.data))
 
 class Test_trim:
-    indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
-    x: DataSegment = DataSegment(indirect_path)
+    data = array([[1,2,3,4], [1,2,3,4]])
+    x = DataSegment(info=SegmentInfo(data, 123456, "rest", 1))
+
+    #indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
+    #x: DataSegment = DataSegment(indirect_path)
+    
     
     def test_trim_shape_reduction(self):
         y: DataSegment = self.x.trim(n=2)
-        assert y.data.shape[1] == 35624//2
+        assert y.data.shape[1] == 2
 
-        z: DataSegment = self.x.trim(n=13)
-        assert z.data.shape[1] == 35624//13
+        z: DataSegment = self.x.trim(n=4)
+        assert z.data.shape[1] == 1
         
     def test_trimming_without_rounding(self):
         test_matrix: ndarray = zeros(shape=(5, 15))

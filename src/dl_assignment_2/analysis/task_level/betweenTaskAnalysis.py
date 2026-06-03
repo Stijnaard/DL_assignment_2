@@ -6,7 +6,6 @@ from typing import Callable
 from os import scandir
 
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 
 class BetweenTaskAnalysis:
     """This class concerns itself with streamlining the analysis of Datasegments.
