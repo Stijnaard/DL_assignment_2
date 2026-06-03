@@ -40,7 +40,7 @@ class ResidualSegment(DataSegment):
             
         return axis
     
-    def transform(self, transformation_function: Callable) -> "ResidualSegment":
+    def transform(self, transformation_function: Callable = lambda x: x*10**12) -> "ResidualSegment":
         data = transformation_function(self.data)
 
         return ResidualSegment(info=SegmentInfo(data=data, 
