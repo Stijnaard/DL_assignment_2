@@ -1,6 +1,6 @@
 from dl_assignment_2.data.dataSegment import DataSegment
 from dl_assignment_2.data.subjectData import SubjectData
-from dl_assignment_2.data.data_config import TASK_TYPES, INTRA_TRAIN
+from dl_assignment_2.data.config import TASK_TYPES, INTRA_TRAIN
 
 from typing import Dict, List, Iterable
 from os import scandir

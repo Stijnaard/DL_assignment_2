@@ -1,6 +1,6 @@
 # Imports:
 #//>>
-from dl_assignment_2.data.data_config import INTRA_TRAIN, INTRA_TEST, CROSS_TRAIN, CROSS_TEST
+from dl_assignment_2.data.config import INTRA_TRAIN, INTRA_TEST, CROSS_TRAIN, CROSS_TEST
 
 from os.path import abspath
 #//<<

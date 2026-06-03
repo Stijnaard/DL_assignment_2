@@ -1,4 +1,4 @@
-from dl_assignment_2.data.data_config import INTRA_TRAIN
+from dl_assignment_2.data.config import INTRA_TRAIN
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo, SegmentSummary
 
 from numpy import array, ndarray, all, zeros

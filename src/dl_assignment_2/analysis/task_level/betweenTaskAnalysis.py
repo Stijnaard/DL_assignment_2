@@ -1,5 +1,5 @@
 from dl_assignment_2.data.absPathProvider import AbsPathProvider
-from dl_assignment_2.data.data_config import TASK_TYPES
+from dl_assignment_2.data.config import TASK_TYPES
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentSummary
 
 from typing import Callable

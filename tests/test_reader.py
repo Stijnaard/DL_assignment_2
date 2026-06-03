@@ -1,7 +1,7 @@
 from dl_assignment_2.data.dataFolderReader import FolderDataReader, ManualDataReader
 from dl_assignment_2.data.subjectData import SubjectData
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo
-from dl_assignment_2.data.data_config import INTRA_TRAIN
+from dl_assignment_2.data.config import INTRA_TRAIN
 
 from typing import List
 
