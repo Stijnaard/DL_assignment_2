@@ -14,4 +14,5 @@ class Evaluator:
         pass
 
 class Evaluation:
-    pass
+    def __init__(results: dict[str, float]) -> None:
+        pass
