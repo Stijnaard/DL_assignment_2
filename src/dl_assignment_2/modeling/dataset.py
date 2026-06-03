@@ -2,7 +2,7 @@ from dl_assignment_2.data.dataSegment import DataSegment
 from dl_assignment_2.data.pipeline import Pipeline
 from dl_assignment_2.data.config import TASK_TYPES
 
-from typing import Sequence, Optional, Callable
+from typing import Sequence, Optional
 
 from torch.utils.data import Dataset
 from torch import Tensor, tensor, accelerator
@@ -13,7 +13,7 @@ class CustomDataset(Dataset):
     label_vector: Tensor
     device: str
 
-    def __init__(self, segments: Sequence[DataSegment], pipeline: Optional[Pipeline] = None, device: str = None) -> None:
+    def __init__(self, segments: Sequence[DataSegment], pipeline: Optional[Pipeline] = None, device: Optional[str] = None) -> None:
         # 1. perform the transformations if you provide a pipeline:
         if pipeline:
             for segment in segments:
@@ -21,7 +21,7 @@ class CustomDataset(Dataset):
         
         # 2. set the device:
         if not device:
-            self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu"
+            self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
 
         # 2. get the data from the segments:
         matrices: list[ndarray] = [expand_dims(segment.get_data(), 0) for segment in segments]
