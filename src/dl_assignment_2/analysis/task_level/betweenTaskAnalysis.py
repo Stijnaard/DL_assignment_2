@@ -89,7 +89,6 @@ if __name__ == "__main__":
     print("\n\n")
     
     bta.get_residuals()
-    bta.transform(lambda x: x*10**3)
     bta.summarize()
     bta.plot()
     bta.plot(way="hist")

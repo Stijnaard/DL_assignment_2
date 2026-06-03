@@ -47,7 +47,7 @@ class DataSegment:
         self.shape = self.data.shape
         return None
     
-    def transform(self, transformation_function: Callable) -> "DataSegment":
+    def transform(self, transformation_function: Callable = lambda x: x*10**12) -> "DataSegment":
         """applies a transformation function to the data and returns a transformed DataSegment as a result."""
         data = transformation_function(self.data)
 
@@ -80,7 +80,8 @@ class DataSegment:
         # 4. return the sliced version as a DataSegment
         return DataSegment(info=SegmentInfo(sliced_data, self.subject_id, self.task, self.segment))
 
-
+    def copy(self) -> DataSegment:
+        return DataSegment(info=SegmentInfo(self.data, self.subject_id, self.task, self.segment))
 
     # all the analytical functions:
     ###############################

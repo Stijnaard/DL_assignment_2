@@ -50,6 +50,13 @@ class Test_trim:
     #indirect_path: str = f"{INTRA_TRAIN}/rest_105923_1.h5"
     #x: DataSegment = DataSegment(indirect_path)
     
+    def test_correctness(self):
+        y: DataSegment = self.x.trim(2)
+        assert all(y.data == array([[2,4], [2,4]]))
+
+    def test_correctness_w_rounding(self):
+        y: DataSegment = self.x.trim(3)
+        assert all(y.data == array([[3], [3]]))
     
     def test_trim_shape_reduction(self):
         y: DataSegment = self.x.trim(n=2)
@@ -58,17 +65,18 @@ class Test_trim:
         z: DataSegment = self.x.trim(n=4)
         assert z.data.shape[1] == 1
         
-    def test_trimming_without_rounding(self):
+    def test_trimming_shape_without_rounding(self):
         test_matrix: ndarray = zeros(shape=(5, 15))
         y: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
         
         assert y.trim(5).shape == (5,3)
         
-    def test_trimming_with_rounding(self):
-        test_matrix: ndarray = zeros(shape=(5, 19))
+    def test_trimming_shape_with_rounding(self):
+        test_matrix: ndarray = array(range(5*19)).reshape((5,19))
         y: DataSegment = DataSegment(info=SegmentInfo(test_matrix, 123456, "rest", 1))
         
         assert y.trim(5).shape == (5,3)
+        
 
 class Test_slice:
     test_matrix: ndarray = array([[1,2],
