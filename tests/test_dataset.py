@@ -1,4 +1,4 @@
-from dl_assignment_2.modeling.loader import CustomDataset
+from dl_assignment_2.modeling.dataset import CustomDataset
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo
 
 from numpy import ndarray, array
