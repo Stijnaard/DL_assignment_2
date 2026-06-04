@@ -145,10 +145,10 @@ def plot_confusion_matrix(y_true: list[int], y_pred: list[int],
 
     ax.set_xticks(range(n))
     ax.set_yticks(range(n))
-    ax.set_xticklabels(SHORT_LABELS, rotation = 25, ha = "right", fontsize = 10)
-    ax.set_yticklabels(SHORT_LABELS, fontsize = 10)
-    ax.set_xlabel("Predicted label", fontsize = 12, labelpad = 8)
-    ax.set_ylabel("True label",      fontsize = 12, labelpad = 8)
+    ax.set_xticklabels(SHORT_LABELS, rotation = 25, ha = "right", fontsize = 12)
+    ax.set_yticklabels(SHORT_LABELS, fontsize = 12)
+    ax.set_xlabel("Predicted label", fontsize = 16, labelpad = 8)
+    ax.set_ylabel("True label",      fontsize = 16, labelpad = 8)
     ax.set_title(
         f"{model_name} - {experiment}-subject Confusion Matrix {title_suffix}",
         fontsize = 16, fontweight = "bold", pad = 12)

@@ -38,7 +38,7 @@ DOWNSAMPLE_FACTOR = 10   # Take every 'n' measurement
 TARGET_FS = ORIGINAL_FS // DOWNSAMPLE_FACTOR
 WINDOW_SIZE   = 200      # Time steps per sample
 WINDOW_STRIDE = 100      # Step between windows (50% overlap)
-NORMALIZATION = "" # Hint 1: normalisation
+NORMALIZATION = "z-score" # Hint 1: normalisation
 
 # Training settings
 DEVICE        = "cuda" # "cuda" for GPU (recommended), "cpu" as fallback

@@ -263,7 +263,7 @@ def train_chunked(
             # Load just this chunk into memory
             X, y = process_files(chunk, verbose = False)
             ds   = MEGDataset(X, y)
-            loader = DL(ds, batch_size = 32, shuffle = True, drop_last = True)
+            loader = DL(ds, batch_size = BATCH_SIZE, shuffle = True, drop_last = True)
 
             for Xb, yb in loader:
                 Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)

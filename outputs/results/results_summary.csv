@@ -1,3 +1,13 @@
 Experiment,Model,Accuracy,Macro F1,Parameters,Last Epoch,Training Time (s)
-Intra,Bi-dir. stacked LSTM,0.250,0.100,261320,0,0.000
-Cross,Bi-dir. stacked LSTM,0.250,0.100,261320,0,0.000
+Intra,Bi-dir. stacked LSTM,0.25,0.1,261320,20,214.362
+Intra,RNN,0.25,0.1,198020,20,211.678
+Intra,GRU,0.25,0.1,3353093,14,213.246
+Intra,EEGNet,0.585,0.582,5460,50,691.989
+Intra,CNN-1D,0.739,0.742,336900,38,408.519
+Intra,CNN+Transformer,0.68,0.668,724293,39,436.423
+Cross,Bi-dir. stacked LSTM,0.25,0.1,261320,50,512.797
+Cross,RNN,0.25,0.1,198020,14,140.518
+Cross,GRU,0.25,0.1,3353093,26,525.664
+Cross,EEGNet,0.25,0.1,5460,11,196.258
+Cross,CNN-1D,0.439,0.453,336900,22,218.895
+Cross,CNN+Transformer,0.25,0.1,724293,34,376.027
