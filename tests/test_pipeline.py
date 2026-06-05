@@ -3,7 +3,6 @@ from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo
 
 from numpy import array, ndarray, all
 
-
 class Test_Pipeline:
     pl = Pipeline(3)
 

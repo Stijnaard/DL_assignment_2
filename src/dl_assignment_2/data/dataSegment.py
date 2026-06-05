@@ -11,9 +11,6 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 
-
-#//<<
-
 class DataSegment:
     """
     The DataSegment class aims to represent a single file of data.
@@ -56,7 +53,7 @@ class DataSegment:
                             task=self.task, 
                             segment=self.segment))
     
-    def slice(self, start: int, end: int, axis: int = 0) -> DataSegment:
+    def slice(self, start: int, end: int, axis: int = 0) -> 'DataSegment':
         """Only keeps the rows/column that fall within the range from start to (and including) end."""
 
         # 1. make sure start- and end numbers are valid:
@@ -80,7 +77,7 @@ class DataSegment:
         # 4. return the sliced version as a DataSegment
         return DataSegment(info=SegmentInfo(sliced_data, self.subject_id, self.task, self.segment))
 
-    def copy(self) -> DataSegment:
+    def copy(self) -> 'DataSegment':
         return DataSegment(info=SegmentInfo(self.data, self.subject_id, self.task, self.segment))
 
     # all the analytical functions:
@@ -293,7 +290,7 @@ class DataSegment:
                               subject_id=self.subject_id,
                               task=self.task)
     
-    def split(self, n: int = 2, axis: int = 0) -> list[DataSegment]:
+    def split(self, n: int = 2, axis: int = 0) -> list['DataSegment']:
         """Splits the DataSegment into smaller, equal DataSegments"""
         # 1. make sure the data can be splitted equally:
         remainder: int = self.data.shape[axis] % n
