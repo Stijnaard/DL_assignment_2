@@ -33,9 +33,9 @@ src/
     |- cnn1d_resnet        1D CNN + ResNet
     |- cnn_transformer.py  CNN + Transformer Hybrid
 |- training/
-    |- trainer.py       ← training loop, early stopping, checkpointing
+    |- trainer.py          Training loop, early stopping, checkpointing
 |- evaluation/
-    |- plots.py         ← all figures and metrics for the paper
+    |- plots.py            All figures and metrics for the paper
 ```
 
 ### 1. Setup

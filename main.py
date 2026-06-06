@@ -96,13 +96,13 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
 
     # 1. Build file list
     test_folders = [CROSS_TEST1, CROSS_TEST2, CROSS_TEST3]
-    file_chunks, test_files = build_loaders_chunked(
+    file_chunks, test_files, stats = build_loaders_chunked(
         CROSS_TRAIN, test_folders,
         files_per_chunk = FILES_PER_CHUNK, verbose = True)
 
     # 2. Building the test loader
     print("\n-- Preprocessing test files…")
-    X_test, y_test = process_files(test_files, verbose = True)
+    X_test, y_test = process_files(test_files, stats, verbose = True)
     test_ds     = MEGDataset(X_test, y_test)
     test_loader = DataLoader(test_ds, batch_size = BATCH_SIZE,
         shuffle = False, num_workers = NUM_WORKERS, pin_memory = True)
@@ -110,7 +110,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     # 3. Build validation loader
     print("\n-- Building validation set from all training chunks…")
     (val_loader, X_train_all, y_train_all) = build_val_loader_from_chunks(
-        file_chunks, val_fraction = VAL_SPLIT)
+        file_chunks, stats, val_fraction = VAL_SPLIT)
 
     # 4. Build the model
     model = get_model(model_name)
