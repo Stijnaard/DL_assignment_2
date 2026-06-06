@@ -2,33 +2,39 @@ from typing import Sequence, Callable, Optional
 
 from torch.utils.data import DataLoader
 from torch import nn, accelerator, no_grad, Tensor, concatenate
+from sklearn.metrics import accuracy_score
 
 class Evaluator:
     """The Evaluator object takes care of evaluating a model with respect
     to its testing data and the given metrics. It returnss """
-    def __init__(self, model: nn.Module, data: DataLoader, device: Optional[str] = None) -> None:
+    def __init__(self, data: DataLoader, device: Optional[str] = None) -> None:
         if not device:
             self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
 
-        self.model: nn.Module = model.to(device)
         self.data: DataLoader = data
 
-        self.predictions: Tensor = self.compute_predictions()
         return None
 
-    def compute_predictions(self) -> Tensor:
-        self.model.eval()
+    def compute_predictions(self, model: nn.Module) -> tuple[Tensor, Tensor]:
+        model.eval()
         all_predictions: list[Tensor] = []
+        all_labels: list[Tensor] = []
 
         with no_grad():
-            for X, _ in self.data:
-                prediction_logits: Tensor = self.model(X)
+            for X, y in self.data:
+                X: Tensor = X.to(self.device)
+                y: Tensor = y.to(self.device)
+                prediction_logits: Tensor = model(X)
                 all_predictions.append(prediction_logits)
+                all_labels.append(y)
 
         predictions: Tensor = concatenate(all_predictions, 0)
-
-        return predictions
-
-class Evaluation:
-    def __init__(self, results: dict[str, float]) -> None:
-        pass
+        labels: Tensor = concatenate(all_labels, 0)
+        return predictions, labels
+    
+    def get_metric(self, model: nn.Module, metric: Callable) -> float:
+        preds, labels = self.compute_predictions(model)
+        preds, labels = preds.cpu(), labels.cpu()
+        predicted_indices: Tensor = preds.argmax(1)
+        
+        return metric(labels, predicted_indices)
