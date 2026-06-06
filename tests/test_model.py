@@ -113,3 +113,28 @@ class Test_computation_from_dataset:
             optimizer.zero_grad()
             
             break
+        
+    def test_learning(self):
+        n_sens          : int = 2
+        hidden_dim      : int = 10
+        output_dim      : int = 4
+        learning_rate   : float = 0.05
+        
+        model: SimpleRNN = SimpleRNN(n_sens, hidden_dim, output_dim)
+        loss_func = nn.CrossEntropyLoss()
+        
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+        
+        for x, y in self.batch_dl:    # x.shape = (1,1,4) = (batch, n_in, seq_len)
+            pred = model(x)     # y.shape = [1[]
+            loss = loss_func(pred, y)
+            
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            
+            new_pred = model(x)
+            new_loss = loss_func(new_pred, y)
+            assert new_loss < loss
+            
+            break
