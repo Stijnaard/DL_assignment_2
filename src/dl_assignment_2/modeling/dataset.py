@@ -40,7 +40,9 @@ class CustomDataset(Dataset):
     def __getitem__(self, index):
         return self.feature_tensor[index,:,:], self.label_vector[index].long()
     
-class TestDataset(Dataset):
+class ManualDataset(Dataset):
+    """This Dataset class is only used for testing.
+    So don't use it for anything else."""
     def __init__(self, x, y) -> None:
         if type(x) != Tensor:
             x = tensor(x).to(float32)

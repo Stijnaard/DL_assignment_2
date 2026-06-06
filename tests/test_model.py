@@ -1,12 +1,10 @@
-from torch import all
-
 from dl_assignment_2.modeling.model import SimpleRNN
 from dl_assignment_2.data.dataSegment import DataSegment, SegmentInfo
 from dl_assignment_2.modeling.dataset import CustomDataset
 
 from torch.utils.data import DataLoader
 from numpy import ndarray, array
-from torch import Tensor, ones, tensor, all, nn, optim
+from torch import Tensor, ones, nn, optim
 
 class Test_output_shapes:
     rnn = SimpleRNN(10,20,4)
@@ -78,7 +76,6 @@ class Test_computation_from_dataset:
         n_sens          : int = 2
         hidden_dim      : int = 10
         output_dim      : int = 4
-        batch_size      : int = 1
         learning_rate   : float = 0.05
         
         model: SimpleRNN = SimpleRNN(n_sens, hidden_dim, output_dim)
@@ -87,6 +84,27 @@ class Test_computation_from_dataset:
         optimizer = optim.SGD(model.parameters(), lr=learning_rate)
         
         for x, y in self.dl:    # x.shape = (1,1,4) = (batch, n_in, seq_len)
+            pred = model(x)     # y.shape = [1[]
+            loss = loss_func(pred, y)
+            
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            
+            break
+
+    def test_forward_pass_batch_loss(self):
+        n_sens          : int = 2
+        hidden_dim      : int = 10
+        output_dim      : int = 4
+        learning_rate   : float = 0.05
+        
+        model: SimpleRNN = SimpleRNN(n_sens, hidden_dim, output_dim)
+        loss_func = nn.CrossEntropyLoss()
+        
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+        
+        for x, y in self.batch_dl:    # x.shape = (1,1,4) = (batch, n_in, seq_len)
             pred = model(x)     # y.shape = [1[]
             loss = loss_func(pred, y)
             
