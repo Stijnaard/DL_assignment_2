@@ -95,7 +95,7 @@ def plot_confusion_matrix(y_true: list[int], y_pred: list[int],
     cm = confusion_matrix(y_true, y_pred)
 
     if normalize:
-        cm_plot      = cm.astype(float) / cm.sum(axis = 1, keepdims=True)
+        cm_plot      = cm.astype(float) / cm.sum(axis = 1, keepdims = True)
         fmt          = "{:.2f}"
         vmax         = 1.0
         title_suffix = "(normalised)"
@@ -161,7 +161,7 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str) -
     w   = 0.35
     x   = np.arange(n)
     # Extra horizontal room so rotated labels don't get clipped
-    fig, ax = plt.subplots(figsize=(max(10, n * 1.4), 6))
+    fig, ax = plt.subplots(figsize = (max(10, n * 1.4), 6))
 
     bars1 = ax.bar(x - w/2, accs, w, label = "Accuracy", color = PALETTE[0], alpha = 0.87)
     bars2 = ax.bar(x + w/2, f1s,  w, label = "Macro F1", color = PALETTE[1], alpha = 0.87)
@@ -185,7 +185,7 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str) -
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
     ax.set_title(f"Model Comparison - {experiment}-subject Classification",
         fontsize = 16, fontweight = "bold")
-    ax.legend(loc="upper left")
+    ax.legend(loc = "upper right", bbox_to_anchor = (1.01, 1), borderaxespad = 0)
     fig.tight_layout()
     save_plot(fig, f"comparison_{experiment}_bar")
 
@@ -208,7 +208,7 @@ def plot_intra_vs_cross(intra_results: dict[str, float],
     width = 0.35
     x     = np.arange(n)
 
-    fig, ax = plt.subplots(figsize=(max(10, n * 1.4), 6))
+    fig, ax = plt.subplots(figsize = (max(10, n * 1.4), 6))
 
     bars_i = ax.bar(x - width / 2, intra, width,
         label = "Intra-subject", color = PALETTE[0], alpha = 0.87)
@@ -248,7 +248,7 @@ def plot_intra_vs_cross(intra_results: dict[str, float],
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
     ax.set_title("Intra-subject vs Cross-subject Accuracy",
         fontsize = 16, fontweight = "bold")
-    ax.legend(loc = "upper left")
+    ax.legend(loc = "upper right", bbox_to_anchor = (1.01, 1), borderaxespad = 0)
     fig.tight_layout()
     save_plot(fig, "intra_vs_cross")
 

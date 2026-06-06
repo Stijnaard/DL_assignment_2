@@ -124,7 +124,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     else:
         start_time = time.time()
         history = train_chunked(
-            model, file_chunks, val_loader,
+            model, file_chunks, val_loader, stats,
             model_name = model_name, epochs = EPOCHS, lr = LEARNING_RATE,
             weight_decay = WEIGHT_DECAY, patience = PATIENCE,
             mixup_alpha = MIXUP_ALPHA_CROSS)
