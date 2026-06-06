@@ -123,7 +123,8 @@ class CNNTransformer(nn.Module):
             batch_first = True,   # Input: (batch, seq, features)
             norm_first  = True)   # Pre-LN: more stable training than Post-LN
         
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers = n_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers = n_layers,
+            enable_nested_tensor = False)
 
         # 4. Attention pooling
         self.pool = AttentionPool(d_model)

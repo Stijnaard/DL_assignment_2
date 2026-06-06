@@ -19,7 +19,7 @@ import random
 import time
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from src.utils            import *
 from src.config.config    import *
@@ -35,6 +35,8 @@ def set_seed(seed: int = SEED):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark     = False
 
 # Run the models on Intra
 def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
@@ -49,7 +51,7 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
 
     # 1. Load the data in
     (train_loader, val_loader, test_loader) = build_loaders(
-        INTRA_TRAIN, INTRA_TEST, batch_size = BATCH_SIZE, verbose = True)
+        INTRA_TRAIN, INTRA_TEST, verbose = True)
 
     # 2. Load the model
     model = get_model(model_name)
@@ -59,14 +61,14 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
     if eval_only:
         print(f"\n-- Loading checkpoint: {ckpt_dir} --")
         model.load_state_dict(torch.load(ckpt_dir, map_location = DEVICE))
-        history = None
-        training_time = 0
+        history, training_time = None, 0.0
     else:
         start_time = time.time()
         history = train(model, train_loader, val_loader,
             model_name = model_name, experiment = "intra",
             epochs = EPOCHS, lr = LEARNING_RATE,
-            weight_decay = WEIGHT_DECAY, patience = PATIENCE)
+            weight_decay = WEIGHT_DECAY, patience = PATIENCE,
+            mixup_alpha = MIXUP_ALPHA_INTRA)
         training_time = time.time() - start_time
         if history:
             plot_training_curves(history, model_name.upper(), "Intra")
@@ -74,7 +76,6 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
     # 4. Evaluate on the test set
     model = model.to(DEVICE)
     y_true, y_pred = get_predictions(model, test_loader, DEVICE)
-
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Intra")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Intra")
 
@@ -112,16 +113,9 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
         shuffle = False, num_workers = NUM_WORKERS, pin_memory = True)
 
     # 3. Build validation loader
-    print("\n--Preparing validation set from first training chunk")
-    X_val_raw, y_val_raw = process_files(file_chunks[0], verbose = False)
-    n_val = int(len(X_val_raw) * VAL_SPLIT)
-    n_train_val = len(X_val_raw) - n_val
-    full_ds = MEGDataset(X_val_raw, y_val_raw)
-    gen = torch.Generator().manual_seed(SEED)
-    _, val_split = random_split(full_ds, [n_train_val, n_val], generator = gen)
-    val_loader = DataLoader(val_split, 
-        batch_size = BATCH_SIZE, shuffle = False,
-        num_workers = NUM_WORKERS, pin_memory = True)
+    print("\n-- Building validation set from all training chunks…")
+    val_loader, X_train_all, y_train_all = build_val_loader_from_chunks(
+        file_chunks, val_fraction = VAL_SPLIT)
 
     # 4. Build the model
     model = get_model(model_name)
@@ -129,15 +123,16 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
 
     # 5. Train or load results
     if eval_only:
-        print(f"\n--Loading checkpoint: {ckpt_dir}")
-        model.load_state_dict(torch.load(ckpt_dir, map_location = DEVICE))
-        history = None
-        training_time = 0
+        print(f"\n-- Loading checkpoint: {ckpt_dir}")
+        model.load_state_dict(torch.load(ckpt_dir, map_location=DEVICE))
+        history, training_time = None, 0.0
     else:
         start_time = time.time()
-        history = train_chunked(model, file_chunks, val_loader,
+        history = train_chunked(
+            model, file_chunks, val_loader,
             model_name = model_name, epochs = EPOCHS, lr = LEARNING_RATE,
-            weight_decay = WEIGHT_DECAY, patience = PATIENCE)
+            weight_decay = WEIGHT_DECAY, patience = PATIENCE,
+            mixup_alpha = MIXUP_ALPHA_CROSS)
         training_time = time.time() - start_time
         if history:
             plot_training_curves(history, model_name.upper(), "Cross")
@@ -145,7 +140,6 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     # 6. Evaluate on the test set
     model = model.to(DEVICE)
     y_true, y_pred = get_predictions(model, test_loader, DEVICE)
-
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Cross")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Cross")
     
@@ -161,17 +155,16 @@ def run_all(experiment: str, eval_only: bool = False
         ) -> dict[str, dict[str, dict[str, float]]]:
     """Train all models and produce comparison plots"""
     all_results: dict[str, dict[str, dict[str, float]]] = {}
-
+ 
     for m in ALL_MODELS:
         try:
             if experiment in ("intra", "both"):
                 all_results.setdefault("Intra", {})[MODEL_DISPLAY[m]] = run_intra(m, eval_only)
             if experiment in ("cross", "both"):
                 all_results.setdefault("Cross", {})[MODEL_DISPLAY[m]] = run_cross(m, eval_only)
-        except Exception as e:
-            print(f"\nEXCEPTION: Skipped {m}: {e}")
-
-    # Comparison bar chart
+        except Exception as exc:
+            print(f"\n[SKIP] {m} raised: {exc}")
+ 
     if "Intra" in all_results:
         plot_comparison_bar(all_results["Intra"], "Intra")
     if "Cross" in all_results:
@@ -179,8 +172,9 @@ def run_all(experiment: str, eval_only: bool = False
     if "Intra" in all_results and "Cross" in all_results:
         plot_intra_vs_cross(
             {m: v["accuracy"] for m, v in all_results["Intra"].items()},
-            {m: v["accuracy"] for m, v in all_results["Cross"].items()})
-
+            {m: v["accuracy"] for m, v in all_results["Cross"].items()},
+        )
+ 
     save_results_csv(all_results)
     return all_results
 
@@ -193,7 +187,10 @@ def main():
     print(f"Eval only  : {args.eval_only}")
     print(f"Using cuda : {torch.cuda.is_available()}")
 
-    # Dispatch
+    # Always initialise so the CSV save below never hits UnboundLocalError
+    intra_metrics: dict[str, float] = {}
+    cross_metrics: dict[str, float] = {}
+ 
     if args.model == "all":
         run_all(args.experiment, args.eval_only)
     else:
@@ -201,20 +198,14 @@ def main():
             intra_metrics = run_intra(args.model, args.eval_only)
         if args.experiment in ("cross", "both"):
             cross_metrics = run_cross(args.model, args.eval_only)
-
-        # Single-model comparison table
+ 
         if args.experiment == "both":
-            model_name = MODEL_DISPLAY.get(args.model)
-            if model_name is None:
-                model_name = args.model
+            display = MODEL_DISPLAY.get(args.model, args.model)
+            if display is None:
+                display = args.model
             save_results_csv({
-                "Intra": {model_name: intra_metrics},
-                "Cross": {model_name: cross_metrics}})
-
-    print(f"\n{'═'*50}")
-    print(f"Figures saved to: {FIGURES_DIR}")
-    print(f"Results saved to: {RESULTS_DIR}")
-    print(f"{'═'*50}\n")
+                "Intra": {display: intra_metrics},
+                "Cross": {display: cross_metrics}})
 
 if __name__ == "__main__":
     main()

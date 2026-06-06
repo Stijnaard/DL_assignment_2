@@ -4,7 +4,7 @@ from src.config.config import *
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog = """
             Examples:
             python main.py                          # use config.py defaults
             python main.py --model gru              # train GRU only
@@ -14,14 +14,14 @@ def parse_args():
             """)
 
     parser.add_argument(
-        "--model", type=str, default=MODEL,
-        choices=ALL_MODELS + ["all"]
+        "--model", type = str, default = MODEL,
+        choices = ALL_MODELS + ["all"]
     )
     parser.add_argument(
-        "--experiment", type=str, default="both",
-        choices=["intra", "cross", "both"]
+        "--experiment", type = str, default = "both",
+        choices = ["intra", "cross", "both"]
     )
     parser.add_argument(
-        "--eval-only", action="store_true"
+        "--eval-only", action = "store_true"
     )
     return parser.parse_args()

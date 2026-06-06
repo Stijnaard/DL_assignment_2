@@ -161,30 +161,45 @@ def plot_confusion_matrix(y_true: list[int], y_pred: list[int],
 # 3. Model comparison bar chart
 def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str):
     """
-    Grouped bar chart: Accuracy and Macro F1 for every model side by side
+    Grouped bar chart: Accuracy and Macro F1 for every model side by side.
+    - Accuracy label sits left of bar centre, F1 label sits right, so they
+      never overlap even when values are close.
+    - Model names are rotated and anchored so long names stay readable.
     """
     get_plot_style()
     models = list(results.keys())
     accs   = [results[m]["accuracy"] * 100 for m in models]
     f1s    = [results[m]["f1"]       * 100 for m in models]
 
-    x, w = np.arange(len(models)), 0.35
-    fig, ax = plt.subplots(figsize = (10, 5))
+    n   = len(models)
+    w   = 0.35
+    x   = np.arange(n)
+    # Extra horizontal room so rotated labels don't get clipped
+    fig, ax = plt.subplots(figsize=(max(10, n * 1.4), 6))
 
-    bars1 = ax.bar(x-w/2, accs, w, label = "Accuracy", color = PALETTE[0], alpha = 0.87)
-    bars2 = ax.bar(x+w/2, f1s,  w, label = "Macro F1", color = PALETTE[1], alpha = 0.87)
+    bars1 = ax.bar(x - w/2, accs, w, label="Accuracy", color=PALETTE[0], alpha=0.87)
+    bars2 = ax.bar(x + w/2, f1s,  w, label="Macro F1", color=PALETTE[1], alpha=0.87)
 
-    get_bar_labels(ax, bars1)
-    get_bar_labels(ax, bars2)
+    # Accuracy label: anchored to the LEFT edge of its bar
+    for bar, val in zip(bars1, accs):
+        ax.text(bar.get_x() + bar.get_width() * 0.25,
+                val + 0.8, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=10, color=PALETTE[0])
+
+    # F1 label: anchored to the RIGHT edge of its bar
+    for bar, val in zip(bars2, f1s):
+        ax.text(bar.get_x() + bar.get_width() * 0.75,
+                val + 0.8, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=10, color=PALETTE[1])
 
     ax.set_xticks(x)
-    ax.set_xticklabels(models, fontsize = 13)
+    ax.set_xticklabels(models, fontsize=12, rotation=30, ha="right")
     ax.set_ylabel("Score (%)")
-    ax.set_ylim(0, 115)
+    ax.set_ylim(0, 118)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
-    ax.set_title(f"Model Comparison - {experiment}-subject Classification",
-        fontsize = 16, fontweight = "bold")
-    ax.legend()
+    ax.set_title(f"Model Comparison — {experiment}-subject Classification",
+                 fontsize=16, fontweight="bold")
+    ax.legend(loc="upper left")
     fig.tight_layout()
     save_plot(fig, f"comparison_{experiment}_bar")
 
@@ -192,56 +207,63 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str):
 def plot_intra_vs_cross(
         intra_results: dict[str, float],
         cross_results: dict[str, float]):
-    """Grouped bars showing how much accuracy drops from Intra to Cross"""
+    """
+    Grouped bars: Intra (left bar) vs Cross (right bar) accuracy per model.
+    - Intra percentage label is pinned to the left side of the Intra bar.
+    - Cross percentage label is pinned to the right side of the Cross bar.
+    - Model names are rotated so long names never overlap.
+    - Drop bracket is drawn above both bars with enough vertical clearance.
+    """
     get_plot_style()
     models = list(intra_results.keys())
-    intra = [intra_results[m]        * 100 for m in models]
-    cross = [cross_results.get(m, 0) * 100 for m in models]
+    intra  = [intra_results[m]        * 100 for m in models]
+    cross  = [cross_results.get(m, 0) * 100 for m in models]
 
-    x = np.arange(len(models))
-    width = 0.35 # width bar
-    fig, ax = plt.subplots(figsize = (10, 5))
+    n     = len(models)
+    width = 0.35
+    x     = np.arange(n)
+
+    fig, ax = plt.subplots(figsize=(max(10, n * 1.4), 6))
 
     bars_i = ax.bar(x - width / 2, intra, width,
-        label = "Intra-subject", color = PALETTE[0], alpha = 0.87)
+                    label="Intra-subject", color=PALETTE[0], alpha=0.87)
     bars_c = ax.bar(x + width / 2, cross, width,
-        label = "Cross-subject", color = PALETTE[2], alpha = 0.87)
+                    label="Cross-subject", color=PALETTE[2], alpha=0.87)
 
-    # Value labels on bars
-    for bi, bc in zip(bars_i, bars_c):
-        hi = bi.get_height()
-        hc = bc.get_height()
-        xi = bi.get_x() + bi.get_width() / 2
-        xc = bc.get_x() + bc.get_width() / 2
-        # Push labels outward for reading clarify
-        ax.text(xi - 0.05, hi + 1.0, f"{hi:.1f}%",
-            ha = "center", va = "bottom", fontsize = 12)
-        ax.text(xc + 0.05, hc + 1.0, f"{hc:.1f}%",
-            ha = "center", va = "bottom", fontsize = 12)
+    # Intra label: left quarter of the Intra bar
+    for bar, val in zip(bars_i, intra):
+        ax.text(bar.get_x() + bar.get_width() * 0.25,
+                val + 0.8, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=10, color=PALETTE[0])
 
-    # Red accuracy-drop annotations
+    # Cross label: right quarter of the Cross bar
+    for bar, val in zip(bars_c, cross):
+        ax.text(bar.get_x() + bar.get_width() * 0.75,
+                val + 0.8, f"{val:.1f}%",
+                ha="center", va="bottom", fontsize=10, color=PALETTE[2])
+
+    # Drop bracket — only when Intra beats Cross by more than 0.5 pp
     for i, (ia, ca) in enumerate(zip(intra, cross)):
         drop = ia - ca
         if drop > 0.5:
-            left_x  = x[i] - width / 2
-            right_x = x[i] + width / 2
-            y = max(ia, ca) + 10            # Position bracket above taller bar
-            # Draw bracket
-            ax.plot([left_x, left_x, right_x, right_x], [y - 1.5, y, y, y - 1.5],
-                color = PALETTE[3], linewidth = 1.5)
-            # Centered red drop text
-            ax.text(x[i], y + 1.0, f"\u2212{drop:.1f}%",
-                ha = "center", va = "bottom", fontsize = 11,
-                color = PALETTE[3], fontweight = "bold")
+            # Place bracket 12 pp above the taller bar so it clears the labels
+            y_top = max(ia, ca) + 12
+            lx = x[i] - width / 2
+            rx = x[i] + width / 2
+            ax.plot([lx, lx, rx, rx], [y_top - 2, y_top, y_top, y_top - 2],
+                    color=PALETTE[3], linewidth=1.5)
+            ax.text(x[i], y_top + 0.5, f"\u2212{drop:.1f}%",
+                    ha="center", va="bottom", fontsize=10,
+                    color=PALETTE[3], fontweight="bold")
 
     ax.set_xticks(x)
-    ax.set_xticklabels(models, fontsize = 13)
+    ax.set_xticklabels(models, fontsize=12, rotation=30, ha="right")
     ax.set_ylabel("Test Accuracy (%)")
-    ax.set_ylim(0, 115)
+    ax.set_ylim(0, 118)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
     ax.set_title("Intra-subject vs Cross-subject Accuracy",
-        fontsize = 16, fontweight = "bold")
-    ax.legend()
+                 fontsize=16, fontweight="bold")
+    ax.legend(loc="upper left")
     fig.tight_layout()
     save_plot(fig, "intra_vs_cross")
 

@@ -10,62 +10,89 @@ import torch
 import torch.nn as nn
 from src.config.config import *
 
+class AttentionPool(nn.Module):
+    """Weighted average of T hidden vectors -> one context vector"""
+    def __init__(self, hidden_size: int):
+        super().__init__()
+        self.score = nn.Linear(hidden_size, 1)
+
+    def forward(self, h: torch.Tensor) -> torch.Tensor:
+        """h: (T, B, H) -> context: (B, H)"""
+        w = torch.softmax(self.score(h), dim=0)  # (T, B, 1)
+        return (w * h).sum(dim=0)                # (B, H)
+
 class StackedLSTM(nn.Module):
     """
-    Bidirectional LSTM model to predict sequence.
-    Reads the sequence forwards and backwards, then combines both directions
-    before the final linear output.
+    Bidirectional stacked LSTM for 4-class MEG brain-state classification.
+
+    Input : (batch, 248, 200)   — sensors × time
+    Output: (batch, 4)          — class logits
     """
-    def __init__(self,
-            input_size:   int   = WINDOW_SIZE,
-            hidden_size:  int   = STACKED_HIDDEN_SIZE,
-            num_layers:   int   = STACKED_NUM_LAYERS,
-            dropout_rate: float = STACKED_DROPOUT_RATE):
-
+    def __init__(self):
         super().__init__()
-        self.hidden_size = hidden_size
-        self.num_layers  = num_layers
+        hidden    = STACKED_HIDDEN_SIZE
+        n_layers  = STACKED_NUM_LAYERS
+        dropout   = STACKED_DROPOUT_RATE
 
+        # 1. Spatial projection: compress 248 sensors -> hidden features
+        # Applied identically to every time step before the LSTM.
+        self.input_proj = nn.Sequential(
+            nn.Linear(N_CHANNELS, hidden),
+            nn.LayerNorm(hidden),
+            nn.GELU())
+
+        # 2. Stacked bidirectional LSTM
         self.lstm = nn.LSTM(
-            input_size    = input_size,
-            hidden_size   = hidden_size,
-            num_layers    = num_layers,
-            batch_first   = True,
-            dropout       = dropout_rate,
-            bidirectional = True)
+            input_size    = hidden,
+            hidden_size   = hidden,
+            num_layers    = n_layers,
+            dropout       = dropout if n_layers > 1 else 0.0,
+            bidirectional = True,
+            batch_first   = False)
+        out_size = hidden * 2 # Bidirectional doubles the output dimension
 
-        # Dropout applied after the LSTM output, before the linear layer
-        self.dropout = nn.Dropout(p = dropout_rate)
+        # 3. Attention pooling over all T time steps
+        self.attention = AttentionPool(out_size)
 
-        # If bidirectional=True, the output has hidden_size * 2 features
-        # (forward direction + backward direction concatenated)
-        self.fc_out = nn.Linear(hidden_size * 2, WINDOW_SIZE)
+        # 4. Classification head
+        self.head = nn.Sequential(
+            nn.LayerNorm(out_size),
+            nn.Dropout(dropout),
+            nn.Linear(out_size, out_size // 2),
+            nn.GELU(),
+            nn.Dropout(dropout / 2),
+            nn.Linear(out_size // 2, NUM_CLASSES))
 
-        print(f"\nStacked MModel created with hidden = {hidden_size} "
-            f"and layers = {num_layers} (bidirectional)")
+        self._init_weights()
+        print(f"\nStackedLSTM: hidden = {hidden}, layers = {n_layers}, "
+              f"bidirectional = True, params = {sum(p.numel() for p in self.parameters()):,}")
 
-    def forward(self, x):
+    def _init_weights(self):
+        # LSTM gates: input-hidden Xavier, hidden-hidden orthogonal, biases zero
+        for name, p in self.lstm.named_parameters():
+            if   "weight_ih" in name: nn.init.xavier_uniform_(p)
+            elif "weight_hh" in name: nn.init.orthogonal_(p)
+            elif "bias"      in name: nn.init.zeros_(p)
+        # Linear layers
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Hidden states initialised to zero, last timestep output used for prediction.
+        x : (batch, 248, 200)
+        Returns logits : (batch, 4)
         """
-        batch_size = x.size(0)
+        # (B, C, T) -> (T, B, C) time-first for the LSTM
+        x = x.permute(2, 0, 1)               # (T, B, 248)
+        T, B, C = x.shape
+        # Project each time-step's sensor values independently
+        x = self.input_proj(x.reshape(T * B, C)).reshape(T, B, -1)  # (T, B, hidden)
+        # Run stacked bidir LSTM, out contains all hidden states
+        out, _ = self.lstm(x)                 # (T, B, hidden*2)
+        # Attention-weighted pooling -> single vector per sample
+        context = self.attention(out)         # (B, hidden*2)
 
-        # num_layers * 2 because bidirectional doubles the number of hidden states
-        h0 = torch.zeros(self.num_layers * 2,
-            batch_size,
-            self.hidden_size,
-            device = x.device)
-        c0 = torch.zeros(self.num_layers * 2,
-            batch_size,
-            self.hidden_size,
-            device = x.device)
-
-        # Forward pass; lstm_out has shape (batch, seq_len, hidden_size * 2)
-        lstm_out, _ = self.lstm(x, (h0, c0))
-
-        # Take the last timestep output as the sequence summary
-        last_hidden = lstm_out[:, -1, :]
-        out = self.dropout(last_hidden)
-        out = self.fc_out(out).squeeze(-1)
-
-        return out
+        return self.head(context)             # (B, 4)

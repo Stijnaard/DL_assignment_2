@@ -8,26 +8,23 @@ from .gru             import GRUClassifier
 from .eegnet          import EEGNet
 from .cnn1d           import CNN1DClassifier
 from .cnn_transformer import CNNTransformer
+from .cnn1d_resnet    import CNN1DResNet
+from .temporal_attention import TemporalAttention
 
 # Simple lookup dict used by get_model()
 MODEL_CLASSES = {
-    "lstm":            StackedLSTM,
-    "rnn":             RNNClassifier,
-    "gru":             GRUClassifier,
-    "eegnet":          EEGNet,
-    "cnn1d":           CNN1DClassifier,
-    "cnn_transformer": CNNTransformer
+    "lstm":               StackedLSTM,
+    "rnn":                RNNClassifier,
+    "gru":                GRUClassifier,
+    "eegnet":             EEGNet,
+    "cnn1d":              CNN1DClassifier,
+    "cnn_transformer":    CNNTransformer,
+    "cnn1d_resnet":       CNN1DResNet,
+    "temporal_attention": TemporalAttention
 }
 
 def get_model(name: str):
-    """
-    Instantiate a model by name string.
-
-    Usage
-    -----
-    model = get_model("gru")          # uses default config
-    model = get_model("cnn_transformer")
-    """
+    """Instantiate a model by name string"""
     name = name.lower()
     if name not in MODEL_CLASSES:
         raise ValueError(
