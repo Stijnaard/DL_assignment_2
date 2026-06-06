@@ -12,7 +12,6 @@ class Evaluator:
             self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
 
         self.data: DataLoader = data
-
         return None
 
     def compute_predictions(self, model: nn.Module) -> tuple[Tensor, Tensor]:
@@ -38,3 +37,21 @@ class Evaluator:
         predicted_indices: Tensor = preds.argmax(1)
         
         return metric(labels, predicted_indices)
+    
+    def get_loss(self, model, loss_func: nn.Module) -> float:
+        model.eval()
+        all_predictions: list[Tensor] = []
+        all_labels: list[Tensor] = []
+        total_loss: float = 0
+        
+        with no_grad():
+            for X, y in self.data:
+                X: Tensor = X.to(self.device)
+                y: Tensor = y.to(self.device)
+                
+                prediction_logits: Tensor = model(X)
+                loss = loss_func(prediction_logits, y)
+                
+                total_loss += loss.item()
+                
+        return total_loss

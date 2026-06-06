@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from dataclasses import dataclass
 from typing import Callable, Optional
-
+import time
 
 @dataclass
 class TrainConfig:
@@ -39,37 +39,55 @@ class Trainer:
 
     def train(self) -> None:
         with no_grad():
-            train_acc: float = self.train_evaluator.get_metric(self.model, accuracy_score)
-            self.train_accuracies.append(train_acc) 
+            start_train_acc: float = self.train_evaluator.get_metric(self.model, accuracy_score)
+            start_train_loss: float = self.train_evaluator.get_loss(self.model, self.loss_func)
+            
+            self.train_accuracies.append(start_train_acc) 
+            self.train_losses.append(start_train_loss)
         
-        for _ in range(1, self.epochs+1):
+        
+        for epoch in range(1, self.epochs+1):
+            print(f"epoch: {epoch}")
+            start_time = time.time()
+            
             self.train_loop()
             
+            training_time = time.time()
+            print(f"training time: {training_time-start_time}")
+            
             with no_grad():
-                train_acc: float = self.train_evaluator.get_metric(self.model, accuracy_score)
-                self.train_accuracies.append(train_acc)
+                start_train_acc: float = self.train_evaluator.get_metric(self.model, accuracy_score)
+                self.train_accuracies.append(start_train_acc)
         
                 if self.dev_evaluator:
                     dev_acc: float = self.dev_evaluator.get_metric(self.model, accuracy_score)
                     self.dev_accuracies.append(dev_acc)
                     
+            eval_time = time.time()
+            print(f"eval time: {eval_time - training_time}")
+
+                    
         return None
 
     def train_loop(self) -> None:
         self.model.train()
+        total_loss: float = 0
+        
         for X, y in self.data:
             X: Tensor = X.to(self.device)
             y: Tensor = y.to(self.device)
             
             pred: Tensor = self.model(X)
 
-            loss =self.loss_func(pred, y)
-            self.train_losses.append(loss)
+            loss: Tensor = self.loss_func(pred, y)
+            total_loss += loss.item()
             
             loss.backward()
             self.optimizer.step()
             self.optimizer.zero_grad()
             
+        self.train_losses.append(total_loss)
+        
     def _set_device(self, device: Optional[str]) -> None:
         if device:
             self.device: str = device
@@ -88,12 +106,23 @@ class Trainer:
         axis_given: bool = True if axis else False
         
         axis = plt.subplots()[-1] if not axis else axis
-        if not axis_given:
-            fig, axis = plt.subplots()
       
         axis.plot(self.train_accuracies, label="train accuracies")  # type: ingnore
         if self.dev_evaluator:
             axis.plot(self.dev_accuracies, label="dev accuracies")
+        axis.legend()
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis
+    
+    def plot_losses(self, axis: Optional[Axes] = None) -> Axes:
+        axis_given: bool = True if axis else False
+        
+        axis = plt.subplots()[-1] if not axis else axis
+      
+        axis.plot(self.train_losses, label="train losses")  # type: ingnore
         axis.legend()
         
         if not axis_given:
