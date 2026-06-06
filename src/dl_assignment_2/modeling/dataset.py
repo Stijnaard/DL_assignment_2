@@ -38,7 +38,7 @@ class CustomDataset(Dataset):
         return len(self.label_vector)
 
     def __getitem__(self, index):
-        return self.feature_tensor[index,:,:], self.label_vector[index]
+        return self.feature_tensor[index,:,:], self.label_vector[index].long()
     
 class TestDataset(Dataset):
     def __init__(self, x, y) -> None:

@@ -4,8 +4,8 @@ from torch.nn import RNN, Linear, Softmax
 from torch import nn, Tensor
 
 class BaseModel(nn.Module, ABC):
-    singular_sigmoid: Softmax = Softmax(dim=1)
-    batch_sigmoid: Softmax = Softmax(dim=2)
+    singular_sigmoid: Softmax = Softmax(dim=0)
+    batch_sigmoid: Softmax = Softmax(dim=1)
     
     @abstractmethod
     def __init__(self):
@@ -39,5 +39,4 @@ class SimpleRNN(BaseModel):
     def forward(self, x):
         _, a = self.rnn(x)
         b = self.linear(a)
-        
-        return b
+        return b.squeeze(0)
