@@ -125,7 +125,7 @@ class Test_computation_from_dataset:
         
         optimizer = optim.SGD(model.parameters(), lr=learning_rate)
         
-        for x, y in self.batch_dl:    # x.shape = (1,1,4) = (batch, n_in, seq_len)
+        for x, y in self.batch_dl:    # x.shape = (1,4) = (batch, n_in, seq_len)
             pred = model(x)     # y.shape = [1[]
             loss = loss_func(pred, y)
             

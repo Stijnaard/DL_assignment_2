@@ -6,16 +6,19 @@ from typing import Callable
 
 
 class Trainer:
-    evaluator: 
-    def __init__(self, model: nn.Module, data: DataLoader, config: TrainConfig) -> None:
-        pass
-    
+    def __init__(self, model: nn.Module, data: DataLoader, epochs: int, optimizer) -> None:
+        self.model: nn.Module = model
+        self.data: DataLoader = data
+
     def train(self) -> None:
         pass
 
-    def _train_for_epoch(self) -> None:
+    def train_loop(self) -> None:
+        for X, y in self.data:
+            pred: Tensor = self.model(X)
+
+            loss: float =
         pass
-    
 @dataclass
 class TrainConfig:
     epochs: int
