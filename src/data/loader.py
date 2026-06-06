@@ -4,8 +4,9 @@ Cuts the signal into short windows (each window = one training sample)
 """
 
 from pathlib import Path
-import numpy as np
 import h5py
+import numpy as np
+
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split, Subset
 from scipy.signal import decimate as scipy_decimate
@@ -53,38 +54,29 @@ def downsample(data: np.ndarray, factor: int = DOWNSAMPLE_FACTOR) -> np.ndarray:
     # Decimate operates along axis = 1 (time), returns float64 -> cast to float32
     return scipy_decimate(data, factor, ftype = "fir", axis = 1).astype(np.float32)
 
-# 4a. Normalisation — standard z-score (Intra)
+# 4a. Normalisation, robust z-score
 def zscore(data: np.ndarray) -> np.ndarray:
-    """Standard z-score per channel: (x - mean) / std.
-    Best for Intra: single subject, clean signal, no inter-subject artefacts."""
-    mean = data.mean(axis=1, keepdims=True)
-    std  = data.std( axis=1, keepdims=True)
-    return ((data - mean) / (std + 1e-8)).astype(np.float32)
-
-# 4b. Normalisation — robust z-score (Cross)
-def zscore_robust(data: np.ndarray) -> np.ndarray:
-    """Robust z-score per channel: (x - median) / IQR.
-    Best for Cross: multiple subjects with varying artefact levels; median/IQR
-    resist spike inflation that would compress the real neural signal."""
-    median = np.median(data, axis=1, keepdims=True)
-    q75    = np.percentile(data, 75, axis=1, keepdims=True)
-    q25    = np.percentile(data, 25, axis=1, keepdims=True)
+    """
+    Robust z-score per channel: (x - median) / IQR.
+    Best for Cross: multiple subjects with varying artefact levels: median/IQR
+    resist spike inflation that would compress the real neural signal.
+    """
+    median = np.median(data, axis = 1, keepdims = True)
+    q75    = np.percentile(data, 75, axis = 1, keepdims = True)
+    q25    = np.percentile(data, 25, axis = 1, keepdims = True)
     return ((data - median) / (q75 - q25 + 1e-8)).astype(np.float32)
-
-# 4c. Normalisation — min-max scaling
+# 4b. Normalisation: min-max scaling
 def minmax(data: np.ndarray) -> np.ndarray:
     """Scales each sensor to [0, 1] range"""
-    mn = data.min(axis=1, keepdims=True)
-    mx = data.max(axis=1, keepdims=True)
+    mn = data.min(axis = 1, keepdims = True)
+    mx = data.max(axis = 1, keepdims = True)
     return ((data - mn) / (mx - mn + 1e-8)).astype(np.float32)
 
 # 4. Normalize the data
-def normalize(data: np.ndarray, method: str = NORMALIZATION,
-              robust: bool = False) -> np.ndarray:
-    """Apply the chosen normalisation method.
-    robust=True forces median/IQR z-score regardless of method setting."""
+def normalize(data: np.ndarray, method: str = NORMALIZATION) -> np.ndarray:
+    """Apply the chosen normalisation method"""
     if method == "minmax": return minmax(data)
-    if robust:             return zscore_robust(data)
+    if method == "zscore": return zscore(data)
     return zscore(data)
 
 # 5. Sliding window
@@ -107,16 +99,16 @@ def make_windows(
     return X, y
 
 # 6. Process a single .h5 file
-def process_file(filepath: Path, robust: bool = False) -> tuple[np.ndarray, np.ndarray]:
+def process_file(filepath: Path) -> tuple[np.ndarray, np.ndarray]:
     label = get_label(filepath)
     data  = load_h5_file(filepath)
     data  = downsample(data)
-    data  = normalize(data, robust=robust)
+    data  = normalize(data)
     X, y  = make_windows(data, label)
     return X, y
 
-def process_files(filepaths: list[Path], verbose: bool = True,
-                  robust: bool = False) -> tuple[np.ndarray, np.ndarray]:
+def process_files(filepaths: list[Path], verbose: bool = True
+    ) -> tuple[np.ndarray, np.ndarray]:
     """
     Process multiple files and concatenate their windows
     (These are the chunks during Cross training (hint 3))
@@ -125,7 +117,7 @@ def process_files(filepaths: list[Path], verbose: bool = True,
     all_y: list[np.ndarray] = []
 
     for fp in filepaths:
-        X, y = process_file(fp, robust=robust)
+        X, y = process_file(fp)
         all_X.append(X)
         all_y.append(y)
         if verbose:
@@ -164,13 +156,12 @@ def make_loader(ds, shuffle: bool, batch_size: int = BATCH_SIZE) -> DataLoader:
         pin_memory  = True,                     # Faster GPU handling
         drop_last  = shuffle,                   # Drop incomplete last batch only during training
         worker_init_fn = _worker_init,          # Reproducible workers
-        persistent_workers = NUM_WORKERS > 0
-    ) 
+        persistent_workers = NUM_WORKERS > 0) 
     
 def build_loaders(
         train_folder: Path,
         test_folder: Path,
-        verbose: bool = True,
+        verbose: bool = True
     ) -> tuple[DataLoader, DataLoader, DataLoader]:
     """
     Load all files from train and test folders, build PyTorch DataLoaders
@@ -201,7 +192,7 @@ def build_loaders_chunked(
         train_folder: Path,
         test_folders: list[Path],
         files_per_chunk: int = FILES_PER_CHUNK,
-        verbose: bool = True,
+        verbose: bool = True
     ) -> tuple[list[list[Path]], list[Path]]:
     """
     For Cross training: instead of loading all files at once,
@@ -239,7 +230,7 @@ def build_val_loader_from_chunks(
     rng = np.random.default_rng(SEED)
  
     for chunk in file_chunks:
-        X, y = process_files(chunk, verbose=False, robust=True)
+        X, y = process_files(chunk, verbose = False)
         n     = len(y)
         n_val = max(1, int(n * val_fraction))
         chosen = rng.choice(n, size = n_val, replace = False)

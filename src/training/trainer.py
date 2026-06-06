@@ -6,33 +6,23 @@ Handles everything that happens during training:
 - Learning rate scheduling
 - Saving the best model checkpoint
 - Tracking metrics (loss, accuracy) over all epochs
- 
-Changes vs previous version:
-- MixUp augmentation added to train_epoch() and the chunked inner loop.
-  Controlled by MIXUP_ALPHA in config (set to 0.0 to disable).
-  Why: forces the model to interpolate between samples rather than memorising
-  sharp decision boundaries tied to specific subjects, directly attacking
-  cross-subject overfitting.
-- Fixed duplicate scheduler.step() in train_chunked() (was stepping twice per
-  epoch, halving the effective LR schedule vs Intra).
 """
  
 from pathlib import Path
- 
 import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import DataLoader as DL
  
-from src.data.loader import process_files, MEGDataset, _worker_init
+from src.data.loader   import process_files, MEGDataset, _worker_init
 from src.config.config import *
  
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-# Utility: count model parameters
 def count_params(model: nn.Module) -> int:
     """Return the number of trainable parameters"""
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -41,8 +31,8 @@ def mixup_batch(
         X: torch.Tensor,
         y: torch.Tensor,
         alpha: float,
-        num_classes: int,
-) -> tuple[torch.Tensor, torch.Tensor]:
+        num_classes: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Apply MixUp to a single batch.
  
@@ -50,7 +40,7 @@ def mixup_batch(
         X_mixed = λ * X[i] + (1-λ) * X[j]
         y_mixed = λ * onehot(y[i]) + (1-λ) * onehot(y[j])
  
-    λ ~ Beta(alpha, alpha).  When alpha=0.0 this is skipped entirely.
+    λ ~ Beta(alpha, alpha).  When alpha = 0.0 this is skipped entirely.
     When alpha is small (e.g. 0.2) most λ values are close to 0 or 1 so
     most samples are barely changed — just enough to smooth boundaries.
  
@@ -59,7 +49,7 @@ def mixup_batch(
     """
     lam = float(np.random.beta(alpha, alpha))
     B   = X.size(0)
-    idx = torch.randperm(B, device=X.device)
+    idx = torch.randperm(B, device = X.device)
  
     X_mix = lam * X + (1.0 - lam) * X[idx]
  
@@ -73,8 +63,8 @@ def mixup_batch(
 def mixup_loss(
         criterion: nn.CrossEntropyLoss,
         logits:    torch.Tensor,
-        y_soft:    torch.Tensor,
-) -> torch.Tensor:
+        y_soft:    torch.Tensor
+    ) -> torch.Tensor:
     """
     CrossEntropyLoss with soft (mixed) targets.
     nn.CrossEntropyLoss accepts float target tensors of shape (B, C) directly
@@ -84,14 +74,14 @@ def mixup_loss(
 
 # One training epoch
 def train_epoch(
-        model:      nn.Module,
-        loader:     DataLoader,
-        optimizer:  torch.optim.Optimizer,
-        criterion:  nn.CrossEntropyLoss,
-        device:     str,
-        grad_clip:  float = GRAD_CLIP,
-        mixup_alpha: float = 0.0,
-) -> tuple[float, float]:
+        model:       nn.Module,
+        loader:      DataLoader,
+        optimizer:   torch.optim.Optimizer,
+        criterion:   nn.CrossEntropyLoss,
+        device:      str,
+        grad_clip:   float = GRAD_CLIP,
+        mixup_alpha: float = MIXUP_ALPHA_INTRA
+    ) -> tuple[float, float]:
     """
     One full pass over the training set.
     If mixup_alpha > 0, MixUp is applied to every batch.
@@ -129,9 +119,9 @@ def eval_epoch(
         model:     nn.Module,
         loader:    DataLoader,
         criterion: nn.Module,
-        device:    str,
-) -> tuple[float, float]:
-    """Evaluate on a DataLoader. No MixUp during validation/test."""
+        device:    str
+    ) -> tuple[float, float]:
+    """Evaluate on a DataLoader. No MixUp during validation/test"""
     model.eval()
     total_loss, correct, total = 0.0, 0, 0
  
@@ -150,9 +140,9 @@ def eval_epoch(
 def get_predictions(
         model:  nn.Module,
         loader: DataLoader,
-        device: str,
-) -> tuple[list[int], list[int]]:
-    """Collect all ground-truth labels and model predictions."""
+        device: str
+    ) -> tuple[list[int], list[int]]:
+    """Collect all ground-truth labels and model predictions"""
     model.eval()
     y_true, y_pred = [], []
  
@@ -169,7 +159,7 @@ def setup_training(
         weight_decay:    float,
         epochs:          int,
         label_smoothing: float,
-):
+    ):
     if OPTIMIZER == "adam_w":
         optimizer = torch.optim.AdamW(
             model.parameters(), lr = lr, weight_decay = weight_decay)
@@ -178,8 +168,8 @@ def setup_training(
             model.parameters(), lr = lr, weight_decay = weight_decay)
  
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs)
-    criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        optimizer, T_max = epochs)
+    criterion = nn.CrossEntropyLoss(label_smoothing = label_smoothing)
  
     return optimizer, scheduler, criterion
 
@@ -196,8 +186,8 @@ def train(
         patience:        int   = PATIENCE,
         label_smoothing: float = LABEL_SMOOTHING,
         mixup_alpha:     float = MIXUP_ALPHA_INTRA
-) -> dict[str, list[float]]:
-    """Full training loop with early stopping and checkpoint saving."""
+    ) -> dict[str, list[float]]:
+    """Full training loop with early stopping and checkpoint saving"""
     model    = model.to(DEVICE)
     n_params = count_params(model)
     print(f"\n--Device       : {DEVICE}")
@@ -252,7 +242,7 @@ def train(
                 end_early_epoch = epoch
                 break
  
-    model.load_state_dict(torch.load(ckpt_path, map_location=DEVICE))
+    model.load_state_dict(torch.load(ckpt_path, map_location = DEVICE))
     print(f"\nSaved the best model to {ckpt_path}")
     history["last-epoch"] = [float(end_early_epoch or epochs)]
     return history
@@ -269,7 +259,7 @@ def train_chunked(
         patience:        int   = PATIENCE,
         label_smoothing: float = LABEL_SMOOTHING,
         mixup_alpha:     float = MIXUP_ALPHA_CROSS
-) -> dict[str, list[float]]:
+    ) -> dict[str, list[float]]:
     """
     Training loop for the Cross experiment (chunked file loading).
     MixUp is applied inside the per-chunk batch loop.
@@ -300,14 +290,13 @@ def train_chunked(
         epoch_loss, epoch_correct, epoch_total = 0.0, 0, 0
  
         for chunk in file_chunks:
-            X, y = process_files(chunk, verbose=False)
+            X, y = process_files(chunk, verbose = False)
             ds   = MEGDataset(X, y)
             loader = DL(
                 ds, batch_size = BATCH_SIZE, shuffle = True, drop_last = True,
                 num_workers = NUM_WORKERS, pin_memory = True,
                 worker_init_fn = _worker_init,
-                persistent_workers = NUM_WORKERS > 0,
-            )
+                persistent_workers = NUM_WORKERS > 0)
  
             for Xb, yb in loader:
                 Xb, yb = Xb.to(DEVICE), yb.to(DEVICE)
@@ -335,7 +324,7 @@ def train_chunked(
         train_acc  = epoch_correct / epoch_total
  
         val_loss, val_acc = eval_epoch(model, val_loader, criterion, DEVICE)
-        scheduler.step()   # once per epoch — was duplicated before
+        scheduler.step()
  
         history["train_loss"].append(train_loss)
         history["val_loss"  ].append(val_loss)
@@ -361,7 +350,7 @@ def train_chunked(
                 end_early_epoch = epoch
                 break
  
-    model.load_state_dict(torch.load(ckpt_path, map_location=DEVICE))
+    model.load_state_dict(torch.load(ckpt_path, map_location = DEVICE))
     print(f"\nSaved the best model to: {ckpt_path}")
     history["last-epoch"] = [float(end_early_epoch or epochs)]
     return history

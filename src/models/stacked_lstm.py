@@ -8,6 +8,7 @@ roughly 2x the parameters.
 
 import torch
 import torch.nn as nn
+
 from src.config.config import *
 
 class AttentionPool(nn.Module):
@@ -18,14 +19,14 @@ class AttentionPool(nn.Module):
 
     def forward(self, h: torch.Tensor) -> torch.Tensor:
         """h: (T, B, H) -> context: (B, H)"""
-        w = torch.softmax(self.score(h), dim=0)  # (T, B, 1)
-        return (w * h).sum(dim=0)                # (B, H)
+        w = torch.softmax(self.score(h), dim = 0)  # (T, B, 1)
+        return (w * h).sum(dim = 0)                # (B, H)
 
 class StackedLSTM(nn.Module):
     """
     Bidirectional stacked LSTM for 4-class MEG brain-state classification.
 
-    Input : (batch, 248, 200)   — sensors × time
+    Input : (batch, 248, 200)   — sensors x time
     Output: (batch, 4)          — class logits
     """
     def __init__(self):

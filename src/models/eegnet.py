@@ -8,7 +8,7 @@ Block 1 — Temporal Conv:  learns frequency filters (like bandpass filters)
 Block 2 — Depthwise Conv: learns which sensors to combine per temporal filter
 Block 3 — Separable Conv: refines and compresses the learned features
 
-- Xavier is designed for symmetric activations (e.g., Tanh, Sigmoid), 
+- Xavier is designed for symmetric activations (e.g., Tanh), 
 - Kaiming for asymmetrical, piecewise linear activations (e.g., ReLU) 
 Pro's: few parameters
 """

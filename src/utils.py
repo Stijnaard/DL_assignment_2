@@ -7,7 +7,7 @@ def parse_args():
         epilog = """
             Examples:
             python main.py                          # use config.py defaults
-            python main.py --model gru              # train GRU only
+            python main.py --model lstm              # train LSTM only
             python main.py --model all              # train all models
             python main.py --model cnn_transformer --experiment intra
             python main.py --eval-only              # skip training, only plot

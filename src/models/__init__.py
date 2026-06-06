@@ -9,7 +9,6 @@ from .eegnet          import EEGNet
 from .cnn1d           import CNN1DClassifier
 from .cnn_transformer import CNNTransformer
 from .cnn1d_resnet    import CNN1DResNet
-from .temporal_attention import TemporalAttention
 
 # Simple lookup dict used by get_model()
 MODEL_CLASSES = {
@@ -19,9 +18,7 @@ MODEL_CLASSES = {
     "eegnet":             EEGNet,
     "cnn1d":              CNN1DClassifier,
     "cnn_transformer":    CNNTransformer,
-    "cnn1d_resnet":       CNN1DResNet,
-    "temporal_attention": TemporalAttention
-}
+    "cnn1d_resnet":       CNN1DResNet}
 
 def get_model(name: str):
     """Instantiate a model by name string"""

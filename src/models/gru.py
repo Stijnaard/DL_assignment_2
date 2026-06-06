@@ -12,6 +12,7 @@ learned so the model focuses on the most informative time points.
 
 import torch
 import torch.nn as nn
+
 from src.config.config import *
 
 class AttentionPool(nn.Module):
@@ -52,8 +53,7 @@ class GRUClassifier(nn.Module):
             num_layers    = n_layers,
             dropout       = dropout if n_layers > 1 else 0.0,
             bidirectional = bidirectional,
-            batch_first   = False,
-        )
+            batch_first   = False)
         out_size = hidden * (2 if bidirectional else 1)
 
         # 3. Attention pooling over all time steps

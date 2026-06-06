@@ -6,6 +6,7 @@ Probably weak due to the fact that RNN:
 
 import torch
 import torch.nn as nn
+
 from src.config.config import *
 
 class RNNClassifier(nn.Module):

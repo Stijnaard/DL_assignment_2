@@ -18,13 +18,7 @@ Architecture:
   4. Classification head: Linear -> GELU -> Dropout -> Linear(4)
 
 Compared to CNN1D the extra depth + skip connections allow richer feature
-hierarchies while keeping training stable — expected to improve on the
-74.9 / 79.0 % Intra accuracy of the plain CNN1D.
-
-Config keys used (add to config.py if not present — defaults shown):
-  CNN1D_RN_CHANNELS  = [64, 128, 256]
-  CNN1D_RN_KERNEL    = 7
-  CNN1D_RN_DROPOUT   = 0.3
+hierarchies while keeping training stable.
 """
 
 import torch
@@ -57,8 +51,7 @@ class ResBlock1D(nn.Module):
             nn.Sequential(
                 nn.Conv1d(in_ch, out_ch, kernel_size = 1, bias = False),
                 nn.BatchNorm1d(out_ch))
-            if in_ch != out_ch else nn.Identity()
-        )
+            if in_ch != out_ch else nn.Identity())
 
         self.act  = nn.GELU()
         self.pool = nn.MaxPool1d(2)

@@ -1,22 +1,17 @@
 """
-Use:
-python main.py
-python main.py --model gru
-python main.py --model all
-python main.py --eval-only
-python main.py --experiment intra
+Usage: see README.md
 
 Working:
 1. Load .h5 files from datasets/Intra/train -> preprocess -> windows
-2. Train model on those windows (with val split)
+2. Train model on those windows using training data, tuning data and test data
 3. Test on datasets/Intra/test -> accuracy + confusion matrix
 4. Repeat for Cross experiment
 5. Save all plots
 6. Save results table
 """
 
-import random
 import time
+import random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -28,7 +23,7 @@ from src.models           import get_model
 from src.training.trainer import *
 from src.evaluation.plots import *
 
-# Reproducability
+# Reproducability (NOTE: still stochastic behaviour)
 def set_seed(seed: int = SEED):
     random.seed(seed)
     np.random.seed(seed)
@@ -79,7 +74,7 @@ def run_intra(model_name: str, eval_only: bool = False) -> dict[str, float]:
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Intra")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Intra")
 
-    # Store extra metrics
+    # 5. Store extra metrics
     metrics["parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
     metrics["training_time"] = training_time
     if history is not None:
@@ -114,7 +109,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
 
     # 3. Build validation loader
     print("\n-- Building validation set from all training chunks…")
-    val_loader, X_train_all, y_train_all = build_val_loader_from_chunks(
+    (val_loader, X_train_all, y_train_all) = build_val_loader_from_chunks(
         file_chunks, val_fraction = VAL_SPLIT)
 
     # 4. Build the model
@@ -124,7 +119,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     # 5. Train or load results
     if eval_only:
         print(f"\n-- Loading checkpoint: {ckpt_dir}")
-        model.load_state_dict(torch.load(ckpt_dir, map_location=DEVICE))
+        model.load_state_dict(torch.load(ckpt_dir, map_location = DEVICE))
         history, training_time = None, 0.0
     else:
         start_time = time.time()
@@ -143,7 +138,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     plot_confusion_matrix(y_true, y_pred, model_name.upper(), "Cross")
     metrics = print_report(y_true, y_pred, model_name.upper(), "Cross")
     
-    # Store extra metrics
+    # 7. Store extra metrics
     metrics["parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
     metrics["training_time"] = training_time
     if history is not None:
@@ -172,8 +167,7 @@ def run_all(experiment: str, eval_only: bool = False
     if "Intra" in all_results and "Cross" in all_results:
         plot_intra_vs_cross(
             {m: v["accuracy"] for m, v in all_results["Intra"].items()},
-            {m: v["accuracy"] for m, v in all_results["Cross"].items()},
-        )
+            {m: v["accuracy"] for m, v in all_results["Cross"].items()})
  
     save_results_csv(all_results)
     return all_results

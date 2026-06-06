@@ -10,11 +10,12 @@ Layer 3 -> longer events
 Pro's: faster to train, local patterns
 Con: not so good at very long-range
 
-- Xavier is designed for symmetric activations (e.g., Tanh, Sigmoid), 
+- Xavier is designed for symmetric activations (e.g., Tanh), 
 - Kaiming for asymmetrical, piecewise linear activations (e.g., ReLU)
 """
 
 import torch.nn as nn
+
 from src.config.config import *
 
 class Conv1DBlock(nn.Module):
@@ -70,7 +71,7 @@ class CNN1DClassifier(nn.Module):
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv1d):
-                nn.init.kaiming_normal_(m.weight, nonlinearity="relu")
+                nn.init.kaiming_normal_(m.weight, nonlinearity = "relu")
             elif isinstance(m, (nn.BatchNorm1d,)):
                 nn.init.ones_(m.weight); nn.init.zeros_(m.bias)
             elif isinstance(m, nn.Linear):

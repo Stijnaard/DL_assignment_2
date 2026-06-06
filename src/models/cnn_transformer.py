@@ -12,6 +12,7 @@ Theoretically the best, since
 import math
 import torch
 import torch.nn as nn
+
 from src.config.config import *
 
 # 1. CNN frontend
@@ -41,7 +42,7 @@ class CNNFrontend(nn.Module):
 
         # Final projection to the Transformer's d_model dimension
         layers += [
-            nn.Conv1d(prev_ch, d_model, kernel_size=1, bias=False),
+            nn.Conv1d(prev_ch, d_model, kernel_size = 1, bias = False),
             nn.BatchNorm1d(d_model),
             nn.GELU()]
 
@@ -66,18 +67,18 @@ class PositionalEncoding(nn.Module):
 
         # Precompute the positional encoding matrix
         pe = torch.zeros(max_len, d_model)
-        pos = torch.arange(max_len, dtype=torch.float).unsqueeze(1) # (max_len, 1)
+        pos = torch.arange(max_len, dtype = torch.float).unsqueeze(1) # (max_len, 1)
         div = torch.exp(torch.arange(0, d_model, 2).float()
                         * (-math.log(10000.0) / d_model))           # (d_model/2,)
-        pe[:, 0::2] = torch.sin(pos * div) # Even indices -> sine
-        pe[:, 1::2] = torch.cos(pos * div) # Odd  indices -> cosine
-        pe = pe.unsqueeze(0)           # (1, max_len, d_model)
-        self.register_buffer("pe", pe) # Not a learnable parameter
-        self.pe : torch.Tensor # pylance error prevention
+        pe[:, 0::2] = torch.sin(pos * div)                          # Even indices -> sine
+        pe[:, 1::2] = torch.cos(pos * div)                          # Odd  indices -> cosine
+        pe = pe.unsqueeze(0)                                        # (1, max_len, d_model)
+        self.register_buffer("pe", pe)                              # Not a learnable parameter
+        self.pe : torch.Tensor                                      # Pylance error prevention
 
     def forward(self, x):
         """x: (B, T, d_model)"""
-        x = x + self.pe[:, : x.size(1)] # Add position info
+        x = x + self.pe[:, : x.size(1)]                             # Add position info
         return self.dropout(x)
     
 # Component 3: Attention Pooling
@@ -89,8 +90,8 @@ class AttentionPool(nn.Module):
 
     def forward(self, x):
         """x: (B, T, d_model) -> context: (B, d_model)"""
-        w = torch.softmax(self.score(x), dim = 1) # (B, T, 1)
-        return (w * x).sum(dim = 1)               # (B, d_model)
+        w = torch.softmax(self.score(x), dim = 1)               # (B, T, 1)
+        return (w * x).sum(dim = 1)                             # (B, d_model)
 
 # Full Hybrid Model
 class CNNTransformer(nn.Module):
@@ -151,11 +152,11 @@ class CNNTransformer(nn.Module):
 
     def forward(self, x):
         """x: (batch, 248, 200) -> logits: (batch, 4)"""
-        x = self.cnn(x)         # CNN: (B, 248, 200) → (B, d_model, T_short)
-        x = x.permute(0, 2, 1)  # Reorder: (B, d_model, T) → (B, T, d_model)  for Transformer
-        x = self.pos_enc(x)     # Add positional encoding
+        x = self.cnn(x)                         # CNN: (B, 248, 200) -> (B, d_model, T_short)
+        x = x.permute(0, 2, 1)                  # Reorder: (B, d_model, T) -> (B, T, d_model)  for Transformer
+        x = self.pos_enc(x)                     # Add positional encoding
         # Self-attention across time steps
-        x = self.transformer(x) # (B, T, d_model)
+        x = self.transformer(x)                 # (B, T, d_model)
         # Weighted pooling -> single vector
-        x = self.pool(x)        # (B, d_model)
-        return self.head(x)     # (B, 4)
+        x = self.pool(x)                        # (B, d_model)
+        return self.head(x)                     # (B, 4)

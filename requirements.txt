@@ -1,6 +1,6 @@
+# Torch seperately
 h5py
 numpy
 scikit-learn
 matplotlib
 scipy
-torch
