@@ -27,7 +27,7 @@ class CustomDataset(Dataset):
         matrices: list[ndarray] = [expand_dims(segment.get_data(), 0) for segment in segments]
         
         # 3. construct the full feature tensor
-        self.feature_tensor: Tensor = tensor(concatenate(matrices, axis=0)).to(float32).to(device)
+        self.feature_tensor: Tensor = tensor(concatenate(matrices, axis=0)).to(float32).transpose(1,2).to(device)
 
         # 4. construct the label vector:
         sorted_tasks = sorted(TASK_TYPES)
@@ -39,4 +39,20 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index):
         return self.feature_tensor[index,:,:], self.label_vector[index]
+    
+class TestDataset(Dataset):
+    def __init__(self, x, y) -> None:
+        if type(x) != Tensor:
+            x = tensor(x).to(float32)
+        if type(y) != tensor:
+            y = tensor(y).to(float32)
+            
+        self.x = x
+        self.y = y
+        
+    def __len__(self) -> int:
+        return 1
+    
+    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
+        return self.x.to(float32), self.y.to(float32)
     

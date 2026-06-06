@@ -59,7 +59,7 @@ class BetweenTaskAnalysis:
         summarizations: list[SegmentSummary] = [segment.summarize() for segment in self.task_to_segment.values()]
         
         for summary in summarizations:
-            print(f"{summary.task:<20} w. mean: {summary.mean}, max: {summary.max}, min: {summary.min}")
+            print(f"{summary.task:<20} w. mean: {summary.mean}, max: {summary.max}, min: {summary.min}, shape:{summary.shape}")
     
     def copy(self) -> "BetweenTaskAnalysis":
         bta: BetweenTaskAnalysis = BetweenTaskAnalysis(self.folder_path, self.segment)
@@ -80,6 +80,7 @@ class BetweenTaskAnalysis:
 
 if __name__ == "__main__":
     bta = BetweenTaskAnalysis()
+    bta.summarize()
     bta.trim(100)
     bta.transform()
     bta.summarize()

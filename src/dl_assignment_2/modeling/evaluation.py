@@ -14,7 +14,7 @@ class Evaluator:
         self.data: DataLoader = data
         return None
 
-    def evaluate(self) -> Evaluation: # type: ignore
+    def evaluate(self) -> None: # type: ignore
         self.model.eval()
         
         with no_grad():
