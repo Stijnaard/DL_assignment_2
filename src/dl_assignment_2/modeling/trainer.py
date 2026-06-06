@@ -4,9 +4,12 @@ from torch import nn, Tensor, no_grad, cuda
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
+from matplotlib.axes import Axes
+import matplotlib.pyplot as plt
 
 from dataclasses import dataclass
 from typing import Callable, Optional
+
 
 @dataclass
 class TrainConfig:
@@ -35,7 +38,10 @@ class Trainer:
         return None
 
     def train(self) -> None:
-        self.model.train()
+        with no_grad():
+            train_acc: float = self.train_evaluator.get_metric(self.model, accuracy_score)
+            self.train_accuracies.append(train_acc) 
+        
         for _ in range(1, self.epochs+1):
             self.train_loop()
             
@@ -50,6 +56,7 @@ class Trainer:
         return None
 
     def train_loop(self) -> None:
+        self.model.train()
         for X, y in self.data:
             X: Tensor = X.to(self.device)
             y: Tensor = y.to(self.device)
@@ -76,6 +83,20 @@ class Trainer:
         metric_score: float = self.dev_evaluator.get_metric(self.model, metric)
         
         return metric_score
-        
     
-
+    def plot_accuracy(self, axis: Optional[Axes] = None) -> Axes:
+        axis_given: bool = True if axis else False
+        
+        axis = plt.subplots()[-1] if not axis else axis
+        if not axis_given:
+            fig, axis = plt.subplots()
+      
+        axis.plot(self.train_accuracies, label="train accuracies")  # type: ingnore
+        if self.dev_evaluator:
+            axis.plot(self.dev_accuracies, label="dev accuracies")
+        axis.legend()
+        
+        if not axis_given:
+            plt.show()
+            
+        return axis

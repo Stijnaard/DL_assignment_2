@@ -40,7 +40,8 @@ class Test_Trainer():
         for _ in range(5):
             self.trainer.train()
         
-        assert self.trainer.train_losses == sorted(self.trainer.train_losses, reverse=True)
+        descending_losses = sorted(self.trainer.train_losses, reverse=True)
+        assert self.trainer.train_losses == descending_losses
         
     
     
