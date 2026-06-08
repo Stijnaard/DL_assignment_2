@@ -21,6 +21,6 @@ CROSS_TEST: str = "datasets/Cross/test"
 # paths to the folders for the intra-training files:
 INTRA_ROOT: str = "datasets/Intra"
 INTRA_TRAIN: str = 'datasets/Intra/train'
-INTRA_TEST: str = 'datasets/Intra/train'
+INTRA_TEST: str = 'datasets/Intra/test'
 
 TASK_TYPES: List[str] = ["rest", "task_motor", "task_story_math", "task_working_memory"]
