@@ -96,13 +96,13 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
 
     # 1. Build file list
     test_folders = [CROSS_TEST1, CROSS_TEST2, CROSS_TEST3]
-    file_chunks, test_files, stats = build_loaders_chunked(
+    file_chunks, test_files, subject_stats = build_loaders_chunked(
         CROSS_TRAIN, test_folders,
         files_per_chunk = FILES_PER_CHUNK, verbose = True)
 
     # 2. Building the test loader
     print("\n-- Preprocessing test files…")
-    X_test, y_test = process_files(test_files, stats, verbose = True)
+    X_test, y_test = process_files(test_files, subject_stats = subject_stats, verbose = True)
     test_ds     = MEGDataset(X_test, y_test)
     test_loader = DataLoader(test_ds, batch_size = BATCH_SIZE,
         shuffle = False, num_workers = NUM_WORKERS, pin_memory = True)
@@ -110,7 +110,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     # 3. Build validation loader
     print("\n-- Building validation set from all training chunks…")
     (val_loader, X_train_all, y_train_all) = build_val_loader_from_chunks(
-        file_chunks, stats, val_fraction = VAL_SPLIT)
+        file_chunks, subject_stats, val_fraction = VAL_SPLIT)
 
     # 4. Build the model
     model = get_model(model_name)
@@ -124,7 +124,7 @@ def run_cross(model_name: str, eval_only: bool = False) -> dict[str, float]:
     else:
         start_time = time.time()
         history = train_chunked(
-            model, file_chunks, val_loader, stats,
+            model, file_chunks, val_loader, subject_stats,
             model_name = model_name, epochs = EPOCHS, lr = LEARNING_RATE,
             weight_decay = WEIGHT_DECAY, patience = PATIENCE,
             mixup_alpha = MIXUP_ALPHA_CROSS)

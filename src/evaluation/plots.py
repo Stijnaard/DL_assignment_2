@@ -185,8 +185,8 @@ def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str) -
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
     ax.set_title(f"Model Comparison - {experiment}-subject Classification",
         fontsize = 16, fontweight = "bold")
-    ax.legend(loc = "upper right", bbox_to_anchor = (1.01, 1), borderaxespad = 0)
-    fig.tight_layout()
+    ax.legend(loc = "center left", bbox_to_anchor = (1.02, 0.5), borderaxespad = 0)
+    fig.tight_layout(rect = (0, 0, 0.82, 1))
     save_plot(fig, f"comparison_{experiment}_bar")
 
 # 4. Intra vs Cross generalisation gap
@@ -248,8 +248,8 @@ def plot_intra_vs_cross(intra_results: dict[str, float],
     ax.yaxis.set_major_formatter(mticker.PercentFormatter())
     ax.set_title("Intra-subject vs Cross-subject Accuracy",
         fontsize = 16, fontweight = "bold")
-    ax.legend(loc = "upper right", bbox_to_anchor = (1.01, 1), borderaxespad = 0)
-    fig.tight_layout()
+    ax.legend(loc = "center left", bbox_to_anchor = (1.02, 0.5), borderaxespad = 0)
+    fig.tight_layout(rect = (0, 0, 0.82, 1))
     save_plot(fig, "intra_vs_cross")
 
 # 5. Classification report (text only)

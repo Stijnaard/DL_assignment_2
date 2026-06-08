@@ -48,15 +48,15 @@ LEARNING_RATE = 5e-4
 WEIGHT_DECAY  = 5e-4            # L2 regularisation
 GRAD_CLIP     = 1.0             # Clipping gradients -> to prevent exploding
 VAL_SPLIT     = 0.20
-PATIENCE      = 10
+PATIENCE      = 20
 OPTIMIZER     = "adam_w"        # Or "adam"
-LABEL_SMOOTHING = 0.00
+LABEL_SMOOTHING = 0.9
 MIXUP_ALPHA_INTRA = 0.0         # MixUp strength
-MIXUP_ALPHA_CROSS = 0.0         # Cross overfitting prevention
+MIXUP_ALPHA_CROSS = 1.0         # Cross overfitting prevention
 
 # Hint 3: memory management for Cross
 FILES_PER_CHUNK = 8
-NUM_WORKERS     = 4        # Parallel workers
+NUM_WORKERS     = 4             # Parallel workers
 
 # ========================= #
 # Model specific parameters # 

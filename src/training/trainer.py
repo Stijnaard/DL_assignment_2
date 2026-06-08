@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import DataLoader as DL
  
-from src.data.loader   import process_files, MEGDataset, _worker_init
+from src.data.loader   import process_files, MEGDataset, _worker_init, SubjectStatsMap
 from src.config.config import *
  
 import sys
@@ -252,7 +252,7 @@ def train_chunked(
         model:           nn.Module,
         file_chunks:     list[list[Path]],
         val_loader:      DataLoader,
-        stats:           tuple,
+        subject_stats:   SubjectStatsMap,
         model_name:      str   = "model",
         epochs:          int   = EPOCHS,
         lr:              float = LEARNING_RATE,
@@ -291,7 +291,7 @@ def train_chunked(
         epoch_loss, epoch_correct, epoch_total = 0.0, 0, 0
  
         for chunk in file_chunks:
-            X, y = process_files(chunk, stats, verbose = False)
+            X, y = process_files(chunk, subject_stats = subject_stats, verbose = False)
             ds   = MEGDataset(X, y)
             loader = DL(
                 ds, batch_size = BATCH_SIZE, shuffle = True, drop_last = True,
