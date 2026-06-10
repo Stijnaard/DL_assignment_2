@@ -14,7 +14,7 @@ import time
 @dataclass
 class TrainConfig:
     epochs: int
-    loss_func: nn.Module
+    loss_func: type[nn.Module]
     optimizer: type
     learning_rate: float
 
