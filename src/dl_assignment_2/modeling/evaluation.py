@@ -10,6 +10,10 @@ class Evaluator:
     def __init__(self, data: DataLoader, device: Optional[str] = None) -> None:
         if not device:
             self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
+        else:
+            self.device = device
+            
+        print(f"evaluator device: {self.device}")
 
         self.data: DataLoader = data
         return None
@@ -32,12 +36,12 @@ class Evaluator:
         labels: Tensor = concatenate(all_labels, 0)
         return predictions, labels
     
-    def get_metric(self, model: nn.Module, metric: Callable) -> float:
+    def get_metric(self, model: nn.Module, metric: Callable, *args, **kwargs) -> float:
         preds, labels = self.compute_predictions(model)
         preds, labels = preds.cpu(), labels.cpu()
         predicted_indices: Tensor = preds.argmax(1)
         
-        return metric(labels, predicted_indices)
+        return metric(labels, predicted_indices, *args, **kwargs)
     
     def get_loss(self, model, loss_func: nn.Module) -> float:
         model.eval()
