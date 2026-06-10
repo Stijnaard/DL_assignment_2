@@ -35,12 +35,12 @@ class Evaluator:
         labels: Tensor = concatenate(all_labels, 0)
         return predictions, labels
     
-    def get_metric(self, model: nn.Module, metric: Callable) -> float:
+    def get_metric(self, model: nn.Module, metric: Callable, *args, **kwargs) -> float:
         preds, labels = self.compute_predictions(model)
         preds, labels = preds.cpu(), labels.cpu()
         predicted_indices: Tensor = preds.argmax(1)
         
-        return metric(labels, predicted_indices)
+        return metric(labels, predicted_indices, *args, **kwargs)
     
     def get_loss(self, model, loss_func: nn.Module) -> float:
         model.eval()
