@@ -94,11 +94,11 @@ class Trainer:
         else:
             self.device = "cuda" if cuda.is_available() else "cpu"
             
-    def evaluate(self, metric: Callable) -> float:
+    def evaluate(self, metric: Callable, *args, **kwargs) -> float:
         if not self.dev_evaluator:
             raise ValueError("no dev data was given in the init")
         
-        metric_score: float = self.dev_evaluator.get_metric(self.model, metric)
+        metric_score: float = self.dev_evaluator.get_metric(self.model, metric, *args, **kwargs)
         
         return metric_score
     
