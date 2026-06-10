@@ -15,6 +15,7 @@ class Evaluator:
         return None
 
     def compute_predictions(self, model: nn.Module) -> tuple[Tensor, Tensor]:
+        model = model.to(self.device)
         model.eval()
         all_predictions: list[Tensor] = []
         all_labels: list[Tensor] = []

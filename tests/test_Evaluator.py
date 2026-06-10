@@ -7,7 +7,7 @@ from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from numpy import ndarray, array
 
-class Test_stuff:
+class Test_Evaluator:
     x: ndarray = array(range(1,16)).reshape(3,5)
     y: ndarray = array(range(1,16)).reshape(3,5)
 

@@ -23,6 +23,6 @@ class Pipeline(BasePipeline):
 class ResidualPipeline(Pipeline):
     def __call__(self, segment: DataSegment) -> DataSegment:
         super().__call__(segment)
-        segment
+        raise NotImplementedError
 
     

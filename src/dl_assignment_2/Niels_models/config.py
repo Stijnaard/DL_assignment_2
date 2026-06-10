@@ -11,6 +11,7 @@ MODEL_DISPLAY = {
     "cnn1d":              "CNN-1D",
     "cnn_transformer":    "CNN+Transformer",
     "cnn1d_resnet":       "CNN1D-ResNet"}
+
 MODEL = "cnn1d" # Default model if none selected
 
 # Clasification lables

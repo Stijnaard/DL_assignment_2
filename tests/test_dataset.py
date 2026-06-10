@@ -41,7 +41,7 @@ class Test_Dataset_Batches(Base_TestDataset):
     def test_correct_batch_shape(self):
         for X, _ in self.dl:
             assert X.shape == (2,4,2)
-            
+    
 class Test_Preps_Data_Correctly:
     sens1 = [1,2,3,4,5]
     sens2 = [5,6,7,8,5]
