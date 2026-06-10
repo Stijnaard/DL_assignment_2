@@ -80,7 +80,7 @@ class CNN1DClassifier(nn.Module):
 
     def forward(self, x):
         """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
-        # x = x.transpose(1, 2)          # (B, 6, 200)
+        x = x.transpose(1, 2)          # (B, 6, 200)
         x = self.input_sequential(x) # (B, 64,  200)
         x = self.conv_blocks(x)      # (B, 256,  25)
         x = self.gap(x)              # (B, 256,   1)
