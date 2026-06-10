@@ -10,6 +10,10 @@ class Evaluator:
     def __init__(self, data: DataLoader, device: Optional[str] = None) -> None:
         if not device:
             self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
+        else:
+            self.device = device
+            
+        print(f"evaluator device: {self.device}")
 
         self.data: DataLoader = data
         return None
