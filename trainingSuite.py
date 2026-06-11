@@ -147,7 +147,8 @@ if __name__ == "__main__":
     config = TrainConfig(
         epochs=12,
         loss_func=nn.CrossEntropyLoss,
-        optimizer=optim.Adam,
+        #optimizer=optim.Adam,
+        optimizer=optim.AdamW,
         learning_rate=3e-4,
     )
 
