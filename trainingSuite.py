@@ -109,7 +109,8 @@ class TrainingSuite:
                     train_config: TrainConfig, 
                     save_model: bool=False, 
                     show_plots: bool=False, 
-                    save_plots: bool=False
+                    save_plots: bool=False,
+                    save_metrics: bool=False
                     ):
         """
         Trains the model on the training set, evaluates it on the validation set, and finally evaluates it on the test set.
@@ -133,8 +134,23 @@ class TrainingSuite:
         trainer.train()
 
         # training and validation evaluation:
-        print(f"training accuracy: {trainer.train_accuracies[-1]:.4f}")
-        print(f"validation accuracy: {trainer.evaluate(accuracy_score):.4f}")
+        train_acc = trainer.train_accuracies[-1]
+        train_loss = trainer.train_losses[-1]
+        valid_acc = trainer.evaluate(accuracy_score)
+
+        print(f"training accuracy: {train_acc:.4f}")
+        print(f"training loss: {train_loss:.4f}")
+        print(f"validation accuracy: {valid_acc:.4f}")
+
+        # metric saving:
+        if save_metrics:
+            metrics_save_path = ROOT / "results" / "metrics" / f"{model_type.__name__}_{experiment}_metrics.pt"
+            torch.save({
+                "train_accuracies": trainer.train_accuracies,
+                "train_losses": trainer.train_losses,
+                "validation_accuracies": trainer.dev_accuracies,
+            }, metrics_save_path)
+            print(f"Metrics saved to {metrics_save_path}")
 
         # plot training and validation metrics:
         self._plot_training(trainer, show_plots, save_plots)
@@ -144,7 +160,7 @@ class TrainingSuite:
 
         # model saving:
         if save_model:
-            model_save_path = f"{model_type.__name__}_{experiment}_model.pt"
+            model_save_path = ROOT / "results" / "models" / f"{model_type.__name__}_{experiment}_model.pt"
             torch.save(model.state_dict(), model_save_path)
             print(f"Model saved to {model_save_path}")
     
@@ -163,10 +179,26 @@ if __name__ == "__main__":
     # StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet
 
     training_suite = TrainingSuite()
-    training_suite.train_model(model_type=CNN1DResNet, 
-                               experiment="intra", 
-                               device=device, 
-                               train_config=config, 
-                               show_plots=True, 
-                               save_plots=True
-                               )
+
+    for model_cls in [StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet, InceptionTime]:
+        print(f"Training {model_cls.__name__} on intra-subject data...")
+        training_suite.train_model(model_type=model_cls, 
+                                   experiment="intra", 
+                                   device=device, 
+                                   train_config=config, 
+                                   show_plots=False, 
+                                   save_plots=True,
+                                   save_model=True,
+                                   save_metrics=True
+                                   )
+
+        print(f"Training {model_cls.__name__} on cross-subject data...")
+        training_suite.train_model(model_type=model_cls, 
+                                   experiment="cross", 
+                                   device=device, 
+                                   train_config=config, 
+                                   show_plots=False, 
+                                   save_plots=True,
+                                   save_model=True,
+                                   save_metrics=True
+                                   )
