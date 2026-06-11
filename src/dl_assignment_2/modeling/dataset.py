@@ -16,8 +16,10 @@ class CustomDataset(Dataset):
     def __init__(self, segments: Sequence[DataSegment], pipeline: Optional[Pipeline] = None, device: Optional[str] = None, element_type: dtype = float32) -> None:
         # 1. perform the transformations if you provide a pipeline:
         if pipeline:
-            for segment in segments:
-                segment = pipeline(segment)
+            # for segment in segments:
+            #     segment = pipeline(segment)
+            segments = [pipeline(segment) for segment in segments]
+
         
         # 2. set the device:
         if not device:
