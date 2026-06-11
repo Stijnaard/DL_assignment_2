@@ -24,7 +24,7 @@ from dl_assignment_2.data.pipeline import Pipeline
 from dl_assignment_2.modeling.dataset import CustomDataset
 from dl_assignment_2.modeling.trainer import TrainConfig, Trainer
 from dl_assignment_2.modeling.evaluation import Evaluator
-from dl_assignment_2.metrics.confusionMatrix import plot_confusion_matrix
+from dl_assignment_2.metrics.plots import plot_confusion_matrix
 
 from dl_assignment_2.Casper_models.InceptionTime import InceptionTime
 from dl_assignment_2.Niels_models import StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet
@@ -55,24 +55,35 @@ class TrainingSuite:
 
         return train_segments, valid_segments
     
-    def _make_plots(self, trainer, show_plots, save_plots):
-        if show_plots:
-            trainer.plot_accuracy()
-            trainer.plot_losses()
-            trainer.evaluate(accuracy_score)
-            trainer.evaluate(plot_confusion_matrix, show=show_plots, save_path=f"confusion_matrix_dev.png" if save_plots else None)
+    def _plot_training(self, trainer: Trainer, show_plots: bool, save_plots: bool):
+        """Plots all defined metrics and saves the plots if specified."""
+        plot_folder_path = ROOT / "results" / "plots" / f"{trainer.model.__class__.__name__}" 
+        plot_folder_path.mkdir(parents=True, exist_ok=True)
 
-    def _test_evaluation(self, model: nn.Module, intra_or_cross: str, pipeline: Pipeline, device: str, show_plots: bool, save_plots: bool):
+        trainer.plot_accuracy(show=show_plots, save_path=f"{plot_folder_path}/train_accuracy.png" if save_plots else None)
+        trainer.plot_losses(show=show_plots, save_path=f"{plot_folder_path}/train_losses.png" if save_plots else None)
+
+        # confusion matrix for validation set
+        trainer.evaluate(plot_confusion_matrix, show=show_plots, save_path=f"{plot_folder_path}/confusion_matrix_dev.png" if save_plots else None)
+
+    def _plot_test(self, evaluator: Evaluator, model: nn.Module, show_plots: bool, save_plots: bool):
+        """Plots all defined metrics and saves the plots if specified."""
+        plot_folder_path = ROOT / "results" / "plots" / f"{model.__class__.__name__}" 
+        plot_folder_path.mkdir(parents=True, exist_ok=True)
+
+        # confusion matrix for test set:
+        evaluator.get_metric(model, plot_confusion_matrix, show=show_plots, save_path=f"{plot_folder_path}/confusion_matrix_test.png" if save_plots else None)
+        
+    def _test_evaluation(self, model: nn.Module, experiment: str, pipeline: Pipeline, device: str, show_plots: bool, save_plots: bool):
         """Evaluates the model on the test set and plots the confusion matrix."""
-        # 
-        if intra_or_cross == "intra":
+        # Choose folder based on experiment type
+        if experiment == "intra":
             test_data_roots = [self.path_provider.get_intra_test_path()]
         else:
             test_data_roots = [self.path_provider.get_cross_test_path(i + 1) for i in range(3)]
 
-        for i, test_data_root in enumerate(test_data_roots):
-            #test_data_root = self.path_provider.get_intra_test_path()
-            test_data_root = self.path_provider.get_cross_test_path(i + 1)
+        # 
+        for test_data_root in test_data_roots:
             test_reader = FolderDataReader(str(test_data_root))
             test_segments = []
             for task in TASK_TYPES:
@@ -85,17 +96,15 @@ class TrainingSuite:
             test_evaluator = Evaluator(test_loader, device=device)
 
             test_acc = test_evaluator.get_metric(model, accuracy_score)
-            test_evaluator.get_metric(
-                model, 
-                plot_confusion_matrix, 
-                show=show_plots, 
-                save_path=f"confusion_matrix_test{i+1}.png" if save_plots else None)
+
+            # create plots of test set evaluation
+            self._plot_test(test_evaluator, model, show_plots, save_plots)
             
             print(f"test accuracy: {test_acc:.4f}")
 
     def train_model(self, 
                     model_type: type[nn.Module], 
-                    intra_or_cross: str, 
+                    experiment: str, 
                     device: str, 
                     train_config: TrainConfig, 
                     save_model: bool=False, 
@@ -106,7 +115,7 @@ class TrainingSuite:
         Trains the model on the training set, evaluates it on the validation set, and finally evaluates it on the test set.
         """
         # Load the training and validation data
-        train_segments, valid_segments = self._load_data(intra_or_cross)
+        train_segments, valid_segments = self._load_data(experiment)
 
         pipeline = Pipeline(trim_n=8)
         
@@ -125,18 +134,17 @@ class TrainingSuite:
 
         # training and validation evaluation:
         print(f"training accuracy: {trainer.train_accuracies[-1]:.4f}")
-        if valid_loader:
-            print(f"validation accuracy: {trainer.evaluate(accuracy_score):.4f}")
+        print(f"validation accuracy: {trainer.evaluate(accuracy_score):.4f}")
 
         # plot training and validation metrics:
-        self._make_plots(trainer, show_plots, save_plots)
+        self._plot_training(trainer, show_plots, save_plots)
 
-        # test set evaluation:
-        self._test_evaluation(model, intra_or_cross, pipeline, device, show_plots, save_plots)
+        # test set evaluation and plotting:
+        self._test_evaluation(model, experiment, pipeline, device, show_plots, save_plots)
 
         # model saving:
         if save_model:
-            model_save_path = f"{model_type.__name__}_{intra_or_cross}_model.pt"
+            model_save_path = f"{model_type.__name__}_{experiment}_model.pt"
             torch.save(model.state_dict(), model_save_path)
             print(f"Model saved to {model_save_path}")
     
@@ -152,11 +160,13 @@ if __name__ == "__main__":
         learning_rate=3e-4,
     )
 
-    #cnn = CNN1DClassifier()
-    #rnn = RNNClassifier()
-    #inception_time = InceptionTime(c_in=6, c_out=5, seq_len=1500)
-
     # StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet
 
     training_suite = TrainingSuite()
-    training_suite.train_model(model_type=RNNClassifier, intra_or_cross="intra", device=device, train_config=config, show_plots=True)
+    training_suite.train_model(model_type=CNN1DResNet, 
+                               experiment="intra", 
+                               device=device, 
+                               train_config=config, 
+                               show_plots=True, 
+                               save_plots=True
+                               )

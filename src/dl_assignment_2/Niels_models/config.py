@@ -71,7 +71,7 @@ STACKED_DROPOUT_RATE = 0.2
 RNN_HIDDEN  = 128
 RNN_LAYERS  = 2    # Stacked layers
 RNN_DROPOUT = 0.3
-RNN_BIDIR   = True # Bidirectional
+RNN_BIDIR   = False # Bidirectional
 
 # GRU
 GRU_HIDDEN  = 256

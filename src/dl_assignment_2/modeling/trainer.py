@@ -101,31 +101,42 @@ class Trainer:
         metric_score: float = self.dev_evaluator.get_metric(self.model, metric, *args, **kwargs)
         
         return metric_score
-    
-    def plot_accuracy(self, axis: Optional[Axes] = None) -> Axes:
-        axis_given: bool = True if axis else False
+
+    def plot_accuracy(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[str] = None) -> Axes:
+        axis_given: bool = axis is not None
         
-        axis = plt.subplots()[-1] if not axis else axis
-      
-        axis.plot(self.train_accuracies, label="train accuracies")  # type: ingnore
+        if not axis_given:
+            fig, axis = plt.subplots()
+        
+        axis.plot(self.train_accuracies, label="train accuracies")
         if self.dev_evaluator:
             axis.plot(self.dev_accuracies, label="dev accuracies")
         axis.legend()
         
         if not axis_given:
-            plt.show()
-            
+            if save_path:
+                fig.savefig(save_path) # type: ignore
+            if show:
+                plt.show()
+            plt.close(fig) # type: ignore
+    
         return axis
     
-    def plot_losses(self, axis: Optional[Axes] = None) -> Axes:
-        axis_given: bool = True if axis else False
+    def plot_losses(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[str] = None) -> Axes:
+        axis_given: bool = axis is not None
         
-        axis = plt.subplots()[-1] if not axis else axis
-      
+        if not axis_given:
+            fig, axis = plt.subplots()
+        
         axis.plot(self.train_losses, label="train losses")  # type: ingnore
         axis.legend()
         
         if not axis_given:
-            plt.show()
-            
+            if save_path:
+                plt.savefig(save_path) # type: ignore
+            if show:
+                plt.show()
+            plt.close(fig) # type: ignore
         return axis
+
+    
