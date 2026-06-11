@@ -25,8 +25,8 @@ class CNNFrontend(nn.Module):
     Each Conv1DBlock: Conv -> BN -> GELU -> Dropout
     Each MaxPool halves the time dimension
     """
-    def __init__(self, in_channels, cnn_channels, d_model,
-            kernel = CNN1D_KERNEL_HYBRID, dropout = CNN1D_DROPOUT_HYBRID):
+    def __init__(self, in_channels: int, cnn_channels: list, d_model: int,
+            kernel: int = CNN1D_KERNEL_HYBRID, dropout: float = CNN1D_DROPOUT_HYBRID):
         super().__init__()
         layers = []
         prev_ch = in_channels
@@ -95,7 +95,7 @@ class AttentionPool(nn.Module):
 
 # Full Hybrid Model
 class CNNTransformer(nn.Module):
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
         d_model  = CNNTRANS_D_MODEL
         nhead    = CNNTRANS_NHEAD
@@ -105,7 +105,7 @@ class CNNTransformer(nn.Module):
 
         # 1. CNN frontend
         self.cnn = CNNFrontend(
-            in_channels  = N_CHANNELS,
+            in_channels  = c_in,
             cnn_channels = CNNTRANS_CNN_CHANNELS,
             d_model = d_model,
             dropout = dropout)
@@ -137,7 +137,7 @@ class CNNTransformer(nn.Module):
             nn.Linear(d_model, d_model // 2),
             nn.GELU(),
             nn.Dropout(dropout / 2),
-            nn.Linear(d_model // 2, NUM_CLASSES))
+            nn.Linear(d_model // 2, c_out))
         self.init_weights()
 
     def init_weights(self):
@@ -151,7 +151,8 @@ class CNNTransformer(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
+        """x: (batch, N_CHANNELS, 200) -> logits: (batch, c_out)"""
+        #x = x.transpose(1, 2)          # (B, 6, 200)
         x = self.cnn(x)                         # CNN: (B, 248, 200) -> (B, d_model, T_short)
         x = x.permute(0, 2, 1)                  # Reorder: (B, d_model, T) -> (B, T, d_model)  for Transformer
         x = self.pos_enc(x)                     # Add positional encoding
@@ -159,4 +160,4 @@ class CNNTransformer(nn.Module):
         x = self.transformer(x)                 # (B, T, d_model)
         # Weighted pooling -> single vector
         x = self.pool(x)                        # (B, d_model)
-        return self.head(x)                     # (B, 4)
+        return self.head(x)                     # (B, c_out)

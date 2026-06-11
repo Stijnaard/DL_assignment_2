@@ -152,8 +152,11 @@ if __name__ == "__main__":
         learning_rate=3e-4,
     )
 
-    cnn = CNN1DClassifier()
+    #cnn = CNN1DClassifier()
+    #rnn = RNNClassifier()
     #inception_time = InceptionTime(c_in=6, c_out=5, seq_len=1500)
-    
+
+    # StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet
+
     training_suite = TrainingSuite()
-    training_suite.train_model(model=cnn, device=device, train_config=config, show_plots=True)
+    training_suite.train_model(model_type=RNNClassifier, intra_or_cross="intra", device=device, train_config=config, show_plots=True)

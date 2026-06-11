@@ -35,7 +35,7 @@ class Conv1DBlock(nn.Module):
         return self.block(x)
 
 class CNN1DClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
         channels = CNN1D_CHANNELS
         kernel   = CNN1D_KERNEL
@@ -44,7 +44,7 @@ class CNN1DClassifier(nn.Module):
         # 1. Input projection (N_CHANNELS sensors -> first channel count)
         # Learned spatial filter over sensors
         self.input_sequential = nn.Sequential(
-            nn.Conv1d(N_CHANNELS, channels[0], kernel_size = 1, bias = False),
+            nn.Conv1d(c_in, channels[0], kernel_size = 1, bias = False),
             nn.BatchNorm1d(channels[0]),
             nn.GELU())
 
@@ -65,7 +65,7 @@ class CNN1DClassifier(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(channels[-1], channels[-1] // 2),
             nn.GELU(),
-            nn.Linear(channels[-1] // 2, NUM_CLASSES))
+            nn.Linear(channels[-1] // 2, c_out))
         self.init_weights()
 
     def init_weights(self):
@@ -79,9 +79,9 @@ class CNN1DClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
-        x = x.transpose(1, 2)          # (B, 6, 200)
+        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
+        #x = x.transpose(1, 2)          # (B, 6, 200)
         x = self.input_sequential(x) # (B, 64,  200)
         x = self.conv_blocks(x)      # (B, 256,  25)
         x = self.gap(x)              # (B, 256,   1)
-        return self.head(x)          # (B, 4)
+        return self.head(x)          # (B, c_out)

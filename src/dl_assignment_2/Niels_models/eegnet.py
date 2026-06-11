@@ -19,8 +19,13 @@ import torch.nn as nn
 from dl_assignment_2.Niels_models.config import *
 
 class EEGNet(nn.Module):
-    def __init__(self):
-        super().__init__()        
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
+        super().__init__()
+
+        self.c_in = c_in
+        self.c_out = c_out
+        self.seq_len = seq_len
+
         # Block 1: Temporal Convolution
         # Input:  (B, 1, N_CHANNELS, 200)  treated as a single-channel "image"
         # Output: (B, F1, N_CHANNELS, 200) F1 temporal filter responses
@@ -38,7 +43,7 @@ class EEGNet(nn.Module):
         # Learns which sensors co-activate for each temporal pattern
         self.block2 = nn.Sequential(
             nn.Conv2d(EEGNET_F1, EEGNET_F2,
-                kernel_size = (N_CHANNELS, 1),
+                kernel_size = (self.c_in, 1),
                 groups = EEGNET_F1,             # Depthwise: each filter independently
                 bias = False),
             nn.BatchNorm2d(EEGNET_F2),
@@ -60,7 +65,7 @@ class EEGNet(nn.Module):
             nn.Dropout(EEGNET_DROPOUT))
         
         flat = self.flatting_size()
-        self.head = nn.Linear(flat, NUM_CLASSES) # Classifier
+        self.head = nn.Linear(flat, self.c_out) # Classifier
         self.init_weights()
 
     def flatting_size(self) -> int:
@@ -69,7 +74,7 @@ class EEGNet(nn.Module):
         so we can set the input size of the final linear layer
         """
         with torch.no_grad():
-            temp = torch.zeros(1, 1, N_CHANNELS, WINDOW_SIZE)
+            temp = torch.zeros(1, 1, self.c_in, self.seq_len)
             out = self.block3(self.block2(self.block1(temp)))
         return out.numel()
 
@@ -84,8 +89,9 @@ class EEGNet(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
-        x = x.unsqueeze(1)   # (B, 1, N_CHANNELS, 200) add channel dim for Conv2d
+        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
+        #x = x.transpose(1, 2)          # (B, c_in, seq_len) -> (B, seq_len, c_in)
+        x = x.unsqueeze(1)   # (B, 1, c_in, seq_len) add channel dim for Conv2d
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)

@@ -10,9 +10,10 @@ import torch.nn as nn
 from dl_assignment_2.Niels_models.config import *
 
 class RNNClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
-        n_channels    = N_CHANNELS
+
+        n_channels    = c_in
         hidden        = RNN_HIDDEN
         n_layers      = RNN_LAYERS
         dropout       = RNN_DROPOUT
@@ -39,7 +40,7 @@ class RNNClassifier(nn.Module):
         # 3. Classification head
         self.head = nn.Sequential(
             nn.Dropout(dropout),
-            nn.Linear(out_size, NUM_CLASSES))
+            nn.Linear(out_size, c_out))
         self.init_weights()
 
     def init_weights(self):
@@ -54,8 +55,9 @@ class RNNClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
+        """x: (batch, N_CHANNELS, 200) -> logits: (batch, c_out)"""
         # Reorder axes: (B, C, T) -> (T, B, C)  because RNN expects time-first
+        #x = x.transpose(1, 2)
         x = x.permute(2, 0, 1) # (T, B, N_CHANNELS)
 
         # Project each time step's sensor values
@@ -71,4 +73,4 @@ class RNNClassifier(nn.Module):
         else:
             h = h_n[-1]
 
-        return self.head(h) # (B, 4)
+        return self.head(h) # (B, c_out)

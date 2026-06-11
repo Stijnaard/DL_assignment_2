@@ -26,10 +26,10 @@ class StackedLSTM(nn.Module):
     """
     Bidirectional stacked LSTM for 4-class MEG brain-state classification.
 
-    Input : (batch, N_CHANNELS, 200)   — sensors x time
-    Output: (batch, 4)          — class logits
+    Input : (batch, c_in, seq_len)   — sensors x time
+    Output: (batch, c_out)          — class logits
     """
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
         hidden    = STACKED_HIDDEN_SIZE
         n_layers  = STACKED_NUM_LAYERS
@@ -38,7 +38,7 @@ class StackedLSTM(nn.Module):
         # 1. Spatial projection: compress N_CHANNELS sensors -> hidden features
         # Applied identically to every time step before the LSTM.
         self.input_proj = nn.Sequential(
-            nn.Linear(N_CHANNELS, hidden),
+            nn.Linear(c_in, hidden),
             nn.LayerNorm(hidden),
             nn.GELU())
 
@@ -62,7 +62,7 @@ class StackedLSTM(nn.Module):
             nn.Linear(out_size, out_size // 2),
             nn.GELU(),
             nn.Dropout(dropout / 2),
-            nn.Linear(out_size // 2, NUM_CLASSES))
+            nn.Linear(out_size // 2, c_out))
 
         self._init_weights()
         print(f"\nStackedLSTM: hidden = {hidden}, layers = {n_layers}, "
@@ -83,11 +83,11 @@ class StackedLSTM(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        x : (batch, N_CHANNELS, 200)
-        Returns logits : (batch, 4)
+        x : (batch, c_in, seq_len)
+        Returns logits : (batch, c_out)
         """
         # (B, C, T) -> (T, B, C) time-first for the LSTM
-        x = x.permute(2, 0, 1)               # (T, B, N_CHANNELS)
+        x = x.permute(2, 0, 1)               # (T, B, c_in)
         T, B, C = x.shape
         # Project each time-step's sensor values independently
         x = self.input_proj(x.reshape(T * B, C)).reshape(T, B, -1)  # (T, B, hidden)
@@ -96,4 +96,4 @@ class StackedLSTM(nn.Module):
         # Attention-weighted pooling -> single vector per sample
         context = self.attention(out)         # (B, hidden*2)
 
-        return self.head(context)             # (B, 4)
+        return self.head(context)             # (B, c_out)

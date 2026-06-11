@@ -66,7 +66,7 @@ class CNN1DResNet(nn.Module):
     Input : (batch, N_CHANNELS, 200)
     Output: (batch, 4)
     """
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
         channels = CNN1D_RN_CHANNELS
         kernel   = CNN1D_RN_KERNEL
@@ -74,7 +74,7 @@ class CNN1DResNet(nn.Module):
 
         # 1. Spatial projection: mix N_CHANNELS sensors into the first channel count
         self.input_proj = nn.Sequential(
-            nn.Conv1d(N_CHANNELS, channels[0], kernel_size = 1, bias = False),
+            nn.Conv1d(c_in, channels[0], kernel_size = 1, bias = False),
             nn.BatchNorm1d(channels[0]),
             nn.GELU())
 
@@ -99,7 +99,7 @@ class CNN1DResNet(nn.Module):
             nn.Linear(channels[-1], channels[-1] // 2),
             nn.GELU(),
             nn.Dropout(dropout / 2),
-            nn.Linear(channels[-1] // 2, NUM_CLASSES))
+            nn.Linear(channels[-1] // 2, c_out))
 
         self._init_weights()
 
@@ -116,8 +116,9 @@ class CNN1DResNet(nn.Module):
                     nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """x: (B, N_CHANNELS, 200) -> logits: (B, 4)"""
+        """x: (B, c_in, seq_len) -> logits: (B, c_out)"""
+        #x = x.transpose(1, 2)    # (B, c_in, seq_len) -> (B, seq_len, c_in)
         x = self.input_proj(x)   # (B, 64,  200)
         x = self.res_blocks(x)   # (B, 256,  ~25) after pooling
         x = self.gap(x)          # (B, 256,    1)
-        return self.head(x)      # (B, 4)
+        return self.head(x)      # (B, c_out)

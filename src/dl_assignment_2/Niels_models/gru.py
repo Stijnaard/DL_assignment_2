@@ -32,9 +32,9 @@ class AttentionPool(nn.Module):
         return (weights * h).sum(dim = 0)               # (B, H)
 
 class GRUClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, c_in: int, c_out: int, seq_len: int):
         super().__init__()
-        n_channels    = N_CHANNELS
+        n_channels    = c_in
         hidden        = GRU_HIDDEN
         n_layers      = GRU_LAYERS
         dropout       = GRU_DROPOUT
@@ -66,7 +66,7 @@ class GRUClassifier(nn.Module):
             nn.Linear(out_size, out_size // 2),
             nn.GELU(),
             nn.Dropout(dropout / 2),
-            nn.Linear(out_size // 2, NUM_CLASSES))
+            nn.Linear(out_size // 2, c_out))
         self._init_weights()
 
     def _init_weights(self):
@@ -80,10 +80,12 @@ class GRUClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, 4)"""
-        x = x.permute(2, 0, 1)                                           # (T, B, N_CHANNELS)
+        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
+        # Reorder axes: (B, C, T) -> (T, B, C)  because RNN expects time-first
+        #x = x.transpose(1, 2) # (B, T, C)
+        x = x.permute(2, 0, 1)                                           # (T, B, c_in)
         T, B, C = x.shape
         x = self.input_sequential(x.reshape(T * B, C)).reshape(T, B, -1) # (T, B, hidden)
         out, _ = self.gru(x)                                             # (T, B, out_size)
         context = self.attention(out)                                    # (B, out_size)
-        return self.head(context)                                        # (B, 4)
+        return self.head(context)                                        # (B, c_out)
