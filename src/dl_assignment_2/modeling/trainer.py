@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Callable, Optional
 import time
+from pathlib import Path
 
 @dataclass
 class TrainConfig:
@@ -102,7 +103,7 @@ class Trainer:
         
         return metric_score
 
-    def plot_accuracy(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[str] = None) -> Axes:
+    def plot_accuracy(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[Path] = None) -> Axes:
         axis_given: bool = axis is not None
         
         if not axis_given:
@@ -122,7 +123,7 @@ class Trainer:
     
         return axis
     
-    def plot_losses(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[str] = None) -> Axes:
+    def plot_losses(self, axis: Optional[Axes] = None, show: bool = False, save_path: Optional[Path] = None) -> Axes:
         axis_given: bool = axis is not None
         
         if not axis_given:
