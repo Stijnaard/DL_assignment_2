@@ -2,16 +2,7 @@
 # - untangle plotting and evaluation code
 
 from pathlib import Path
-import random
 from typing import Any, Callable
-# import sys
-
-# ROOT = Path(__file__).resolve().parent
-# print(f"ROOT: {ROOT}")
-# SRC = ROOT / "src"
-# if str(SRC) not in sys.path:
-#     print(f"Adding {SRC} to sys.path")
-#     sys.path.insert(0, str(SRC))
 
 from sklearn.metrics import accuracy_score
 import torch
@@ -37,13 +28,11 @@ class TestingSuite:
 
     _test_loaders: list[DataLoader]
     
-    
     def __init__(self, experiment: str, results_path: Path, data_pipeline: Pipeline = Pipeline(trim_n=8), device: str | None = None) -> None:
         self.experiment = experiment
         self.device = device or ("cuda" if cuda.is_available() else "cpu")
         self.results_path = results_path
         self.pipeline = data_pipeline
-
 
         # Path providers for data and results
         self._data_path_provider = DataAbsPathProvider()
@@ -89,34 +78,17 @@ class TestingSuite:
 
         # evaluate on each test set and create plots
         metrics: dict[str, Any] = {}
-        for i, test_data_root in enumerate(test_data_roots):
-            # test_reader = FolderDataReader(str(test_data_root))
-            # test_segments = []
-            # for task in TASK_TYPES:
-            #     task_segments = test_reader.get_data_for_specific_task(task)
-            #     test_segments.extend(task_segments)
-            
-            # test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
-            # test_loader = DataLoader(test_dataset, batch_size=8)
-
+        for i, _ in enumerate(test_data_roots):
             test_evaluator = Evaluator(self._test_loaders[i], device=self.device)
 
             for metric_fn in metric_fns:
                  metric_value = test_evaluator.get_metric(model, metric_fn)
                  metrics[f"{metric_fn.__name__}_test_{i+1}"] = metric_value
-            #est_acc = test_evaluator.get_metric(model, accuracy_score)
-            #test_accuracies.append(test_acc)
-            #metrics[f"test_{i+1}"] = test_acc   
+
 
             # create plots of test set evaluation
             self._plot_test(test_evaluator, model, i+1, show_plots, save_plots)
             
-            #print(f"test accuracy: {test_acc:.4f}")
-        
-        # if save_metrics:
-        #     metrics_path = self._results_path_provider.get_metric_path(type(model), self.experiment)
-        #     torch.save({"accuracy": test_accuracies}, metrics_path,)
-
         return metrics
     
     def _save_metrics(self, model_type: type[nn.Module], metrics: dict[str, float]):
@@ -169,26 +141,8 @@ class TestingSuite:
 
         return model_accuracies
 
-
     def compare_models(self, model_types: list[type[nn.Module]], show_plots: bool=False, save_plots: bool=False):
         """Compares multiple models on the test set."""
-        
-        # model_accuracies = {}
-        # for model_type in model_types:
-        #     # load metrics from the results folder
-        #     metrics_path = self._results_path_provider.get_metric_path(model_type, self.experiment)
-        #     metrics = torch.load(metrics_path, map_location=self.device)
-        #     if self.experiment == "intra":
-        #         metric_names = [f"{accuracy_score.__name__}_test_1"]
-        #     else:
-        #         metric_names = [f"{accuracy_score.__name__}_test_{i+1}" for i in range(len(self._test_loaders))]
-
-        #     accuracy_accumulated = 0
-        #     for metric_name in metric_names:
-        #         accuracy_accumulated += metrics[metric_name]
-
-        #     model_accuracies[model_type.__name__] = accuracy_accumulated / len(metric_names)
-
         model_accuracies = self.get_model_accuracies(model_types, self.experiment)
 
         # create comparison plot

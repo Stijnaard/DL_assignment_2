@@ -1,14 +1,6 @@
 
 from pathlib import Path
 import random
-# import sys
-
-# ROOT = Path(__file__).resolve().parent
-# print(f"ROOT: {ROOT}")
-# SRC = ROOT / "src"
-# if str(SRC) not in sys.path:
-#     print(f"Adding {SRC} to sys.path")
-#     sys.path.insert(0, str(SRC))
 
 from sklearn.metrics import accuracy_score
 import torch
@@ -33,7 +25,6 @@ class TrainingSuite:
     
     _train_loader: DataLoader
     _valid_loader: DataLoader
-    #_test_loaders: list[DataLoader]
 
     _data_path_provider: DataAbsPathProvider
     _results_path_provider: ResultsAbsPathProvider
@@ -50,10 +41,6 @@ class TrainingSuite:
 
         # Load the training and validation data
         self._load_train_data()
-        
-        # Load the test data based on the experiment type
-        #self._test_loaders: list[DataLoader] = []
-        #self._Load_test_data()     
 
     def _load_train_data(self):
         if self.experiment == "intra":
@@ -78,23 +65,6 @@ class TrainingSuite:
 
         self.train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
         self.valid_loader = DataLoader(valid_dataset, batch_size=8) if valid_dataset else None
-
-    # def _Load_test_data(self) -> None:
-    #     if self.experiment == "intra":
-    #         test_data_paths = [self._data_path_provider.get_intra_test_path()]
-    #     else:
-    #         test_data_paths = [self._data_path_provider.get_cross_test_path(i + 1) for i in range(3)]
-
-    #     for test_data_root in test_data_paths:
-    #         test_reader = FolderDataReader(test_data_root)
-    #         test_segments = []
-    #         for task in TASK_TYPES:
-    #             task_segments = test_reader.get_data_for_specific_task(task)
-    #             test_segments.extend(task_segments)
-
-    #         test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
-    #         test_loader = DataLoader(test_dataset, batch_size=8)
-    #         self._test_loaders.append(test_loader)
     
     def _plot_training(self, trainer: Trainer, show_plots: bool, save_plots: bool):
         """Plots all defined metrics and saves the plots if specified."""
@@ -109,43 +79,6 @@ class TrainingSuite:
         # confusion matrix for validation set
         confusion_plot_path = self._results_path_provider.get_plot_path(type(trainer.model), self.experiment, "val_confusion_matrix")
         trainer.evaluate(plot_confusion_matrix, show=show_plots, save_path=confusion_plot_path if save_plots else None)
-
-    # def _plot_test(self, evaluator: Evaluator, model: nn.Module, test_index: int, show_plots: bool, save_plots: bool):
-    #     """Plots all defined metrics and saves the plots if specified."""
-    #     plot_folder_path = self._results_path_provider.get_plot_folder_path(type(model))
-    #     plot_folder_path.mkdir(parents=True, exist_ok=True)
-
-    #     # confusion matrix for test set:
-    #     confusion_plot_path = self._results_path_provider.get_plot_path(type(model), self.experiment, f"test_{test_index}_confusion_matrix")
-    #     evaluator.get_metric(model, plot_confusion_matrix, show=show_plots, save_path=confusion_plot_path if save_plots else None)
-
-    # def _test_evaluation(self, model: nn.Module, show_plots: bool, save_plots: bool):
-    #     """Evaluates the model on the test set and plots the confusion matrix."""
-    #     # Choose folder based on experiment type
-    #     if self.experiment == "intra":
-    #         test_data_roots = [self._data_path_provider.get_intra_test_path()]
-    #     else:
-    #         test_data_roots = [self._data_path_provider.get_cross_test_path(i + 1) for i in range(3)]
-
-    #     # evaluate on each test set and create plots
-    #     for i, test_data_root in enumerate(test_data_roots):
-    #         test_reader = FolderDataReader(str(test_data_root))
-    #         test_segments = []
-    #         for task in TASK_TYPES:
-    #             task_segments = test_reader.get_data_for_specific_task(task)
-    #             test_segments.extend(task_segments)
-            
-    #         test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
-    #         test_loader = DataLoader(test_dataset, batch_size=8)
-
-    #         test_evaluator = Evaluator(test_loader, device=self.device)
-
-    #         test_acc = test_evaluator.get_metric(model, accuracy_score)
-
-    #         # create plots of test set evaluation
-    #         self._plot_test(test_evaluator, model, i+1, show_plots, save_plots)
-            
-    #         print(f"test accuracy: {test_acc:.4f}")
 
     def _save_metrics(self, trainer: Trainer, model_type: type[nn.Module]):
         metrics_save_path = self._results_path_provider.get_metric_path(model_type, self.experiment)
@@ -204,94 +137,3 @@ class TrainingSuite:
         # model saving
         if save_model:
             self._save_model(model, model_type)
-
-
-# class TestingSuite:
-#     """This class is responsible for evaluating a trained model on the test set."""
-#     experiment: str
-#     pipeline: Pipeline
-#     device: str
-#     results_path: Path
-
-#     _test_loaders: list[DataLoader]
-    
-    
-#     def __init__(self, experiment: str, results_path: Path, data_pipeline: Pipeline = Pipeline(trim_n=8), device: str | None = None) -> None:
-#         self.experiment = experiment
-#         self.device = device or ("cuda" if cuda.is_available() else "cpu")
-#         self.results_path = results_path
-#         self.pipeline = data_pipeline
-
-
-#         # Path providers for data and results
-#         self._data_path_provider = DataAbsPathProvider()
-#         self._results_path_provider = ResultsAbsPathProvider(results_path)
-        
-#         # Load the test data based on the experiment type
-#         self._test_loaders: list[DataLoader] = []
-#         self._Load_test_data()
-
-#     def _Load_test_data(self) -> None:
-#         if self.experiment == "intra":
-#             test_data_paths = [self._data_path_provider.get_intra_test_path()]
-#         else:
-#             test_data_paths = [self._data_path_provider.get_cross_test_path(i + 1) for i in range(3)]
-
-#         for test_data_root in test_data_paths:
-#             test_reader = FolderDataReader(test_data_root)
-#             test_segments = []
-#             for task in TASK_TYPES:
-#                 task_segments = test_reader.get_data_for_specific_task(task)
-#                 test_segments.extend(task_segments)
-
-#             test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
-#             test_loader = DataLoader(test_dataset, batch_size=8)
-#             self._test_loaders.append(test_loader)
-
-#     def _plot_test(self, evaluator: Evaluator, model: nn.Module, test_index: int, show_plots: bool, save_plots: bool):
-#         """Plots all defined metrics and saves the plots if specified."""
-#         plot_folder_path = self._results_path_provider.get_plot_folder_path(type(model))
-#         plot_folder_path.mkdir(parents=True, exist_ok=True)
-
-#         # confusion matrix for test set:
-#         confusion_plot_path = self._results_path_provider.get_plot_path(type(model), self.experiment, f"test_{test_index}_confusion_matrix")
-#         evaluator.get_metric(model, plot_confusion_matrix, show=show_plots, save_path=confusion_plot_path if save_plots else None)
-
-#     def _test_evaluation(self, model: nn.Module, show_plots: bool, save_plots: bool):
-#         """Evaluates the model on the test set and plots the confusion matrix."""
-#         # Choose folder based on experiment type
-#         if self.experiment == "intra":
-#             test_data_roots = [self._data_path_provider.get_intra_test_path()]
-#         else:
-#             test_data_roots = [self._data_path_provider.get_cross_test_path(i + 1) for i in range(3)]
-
-#         # evaluate on each test set and create plots
-#         for i, test_data_root in enumerate(test_data_roots):
-#             test_reader = FolderDataReader(str(test_data_root))
-#             test_segments = []
-#             for task in TASK_TYPES:
-#                 task_segments = test_reader.get_data_for_specific_task(task)
-#                 test_segments.extend(task_segments)
-            
-#             test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
-#             test_loader = DataLoader(test_dataset, batch_size=8)
-
-#             test_evaluator = Evaluator(test_loader, device=self.device)
-
-#             test_acc = test_evaluator.get_metric(model, accuracy_score)
-
-#             # create plots of test set evaluation
-#             self._plot_test(test_evaluator, model, i+1, show_plots, save_plots)
-            
-#             print(f"test accuracy: {test_acc:.4f}")
-
-#     def test_model(self, model_type: type[nn.Module], show_plots: bool=False, save_plots: bool=False):
-#         """Evaluates the given model on the test set."""
-#         c_in, seq_len = self._test_loaders[0].dataset[0][0].shape # hacky as hell way to do this, but it works
-
-#         # Load the model if a path or model type is given
-#         model_load_path = self._results_path_provider.get_model_path(model_type, self.experiment)
-#         model = model_type(c_in=c_in, c_out=len(TASK_TYPES), seq_len=seq_len).to(self.device)
-#         model.load_state_dict(torch.load(model_load_path, map_location=self.device))
-
-#         self._test_evaluation(model, show_plots, save_plots)
