@@ -1,8 +1,7 @@
-from typing import Sequence, Callable, Optional
+from typing import Callable, Optional
 
 from torch.utils.data import DataLoader
 from torch import nn, accelerator, no_grad, Tensor, concatenate
-from sklearn.metrics import accuracy_score
 
 class Evaluator:
     """The Evaluator object takes care of evaluating a model with respect
@@ -12,8 +11,6 @@ class Evaluator:
             self.device = accelerator.current_accelerator().type if accelerator.is_available() else "cpu" # type: ignore
         else:
             self.device = device
-            
-        print(f"evaluator device: {self.device}")
 
         self.data: DataLoader = data
         return None
