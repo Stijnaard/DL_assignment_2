@@ -10,6 +10,9 @@ from numpy import ndarray, array, delete, zeros, concatenate
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
+import numpy as np
+from scipy.stats import zscore
+
 
 class DataSegment:
     """
@@ -65,6 +68,19 @@ class DataSegment:
                             subject_id=self.subject_id, 
                             task=self.task, 
                             segment=self.segment))
+    
+    def z_score_normalize(self) -> "DataSegment":
+        """
+        returns a z-score normalized version of the DataSegment.
+        
+        normalizes each channel independently, by computing the z-score of each element in the channel with respect to the mean and standard deviation of the channel.
+        """
+        data = self.data
+        normalized = zscore(data, axis=1, ddof=0)
+        normalized = np.nan_to_num(normalized, nan=0.0)  # handle zero-std channels
+        data = normalized
+        
+        return DataSegment(info=SegmentInfo(data, self.subject_id, self.task, self.segment))
     
     def slice(self, start: int, end: int, axis: int = 0) -> 'DataSegment':
         """Only keeps the rows/column that fall within the range from start to (and including) end."""
