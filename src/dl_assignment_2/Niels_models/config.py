@@ -63,14 +63,14 @@ NUM_WORKERS     = 4             # Parallel workers
 # Model specific parameters # 
 # ========================= #
 # Stacked bi-directional LSTM
-STACKED_HIDDEN_SIZE  = 64
+STACKED_HIDDEN_SIZE  = 32 #64
 STACKED_NUM_LAYERS   = 2
 STACKED_DROPOUT_RATE = 0.2
 
 # Rnn
-RNN_HIDDEN  = 128
+RNN_HIDDEN  = 16 #128
 RNN_LAYERS  = 2    # Stacked layers
-RNN_DROPOUT = 0.3
+RNN_DROPOUT = 0.5 #0.3
 RNN_BIDIR   = False # Bidirectional
 
 # GRU
@@ -87,9 +87,9 @@ EEGNET_KERNEL_SIZE = 64                     # Temporal kernel
 EEGNET_DROPOUT     = 0.5
 
 # CNN-1D settings
-CNN1D_CHANNELS = [64, 128, 256]             # Feature maps per kernel
+CNN1D_CHANNELS = [8, 16, 32] #[32, 64, 16] #[64, 128, 256]             # Feature maps per kernel
 CNN1D_KERNEL   = 7                          # Kernel size for each layer
-CNN1D_DROPOUT  = 0.2
+CNN1D_DROPOUT  = 0.3
 
 # CNN1D + Transformer Hybrid settings
 CNNTRANS_CNN_CHANNELS = [64, 128] # CNN frontend feature maps
@@ -102,6 +102,6 @@ CNN1D_KERNEL_HYBRID   = 7
 CNN1D_DROPOUT_HYBRID  = 0.2
 
 # CNN1D - ResNet settings
-CNN1D_RN_CHANNELS = [64, 128, 256]
+CNN1D_RN_CHANNELS = [16, 32, 64]  #[64, 128, 256]
 CNN1D_RN_KERNEL   = 7
 CNN1D_RN_DROPOUT  = 0.3
