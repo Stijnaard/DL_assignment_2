@@ -1,0 +1,1 @@
+from .MEG1DCNN3 import MEG1DCNN3
