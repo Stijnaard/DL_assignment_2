@@ -11,32 +11,34 @@ from torch.utils.data import DataLoader
 
 from dl_assignment_2.data.config import TASK_TYPES
 from dl_assignment_2.data.absPathProvider import AbsPathProvider as DataAbsPathProvider
+from dl_assignment_2.data.dataset_pipeline import BaseDatasetPipeline
 from dl_assignment_2.results.absPathProvider import AbsPathProvider as ResultsAbsPathProvider
 from dl_assignment_2.data.dataFolderReader import FolderDataReader
-from dl_assignment_2.data.pipeline import Pipeline
+from dl_assignment_2.data.pipeline import BasePipeline, Pipeline
 from dl_assignment_2.modeling.dataset import CustomDataset
 from dl_assignment_2.modeling.evaluation import Evaluator
 from dl_assignment_2.results.plots import plot_compare_accuracies, plot_confusion_matrix, plot_intra_vs_cross
 
+from dl_assignment_2.trainingSuite import SessionConfig
 
 class TestingSuite:
     """This class is responsible for evaluating a trained model on the test set."""
     experiment: str
-    pipeline: Pipeline
+    pipeline: BaseDatasetPipeline
     device: str
     results_path: Path
 
     _test_loaders: list[DataLoader]
     
-    def __init__(self, experiment: str, results_path: Path, data_pipeline: Pipeline = Pipeline(trim_n=8), device: str | None = None) -> None:
-        self.experiment = experiment
-        self.device = device or ("cuda" if cuda.is_available() else "cpu")
-        self.results_path = results_path
-        self.pipeline = data_pipeline
+    def __init__(self, session_config: SessionConfig) -> None:
+        self.experiment = session_config.experiment
+        self.device = session_config.device or ("cuda" if cuda.is_available() else "cpu")
+        self.results_path = session_config.results_path
+        self.pipeline = session_config.pipeline
 
         # Path providers for data and results
         self._data_path_provider = DataAbsPathProvider()
-        self._results_path_provider = ResultsAbsPathProvider(results_path)
+        self._results_path_provider = ResultsAbsPathProvider(session_config.results_path)
         
         # Load the test data based on the experiment type
         self._test_loaders: list[DataLoader] = []
@@ -55,7 +57,7 @@ class TestingSuite:
                 task_segments = test_reader.get_data_for_specific_task(task)
                 test_segments.extend(task_segments)
 
-            test_dataset = CustomDataset(test_segments, pipeline=self.pipeline, device=self.device)
+            test_dataset = CustomDataset(test_segments, dataset_pipeline=self.pipeline, device=self.device)
             test_loader = DataLoader(test_dataset, batch_size=8)
             self._test_loaders.append(test_loader)
 

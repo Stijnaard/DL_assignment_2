@@ -1,5 +1,6 @@
 from dl_assignment_2.data.dataSegment import DataSegment
-from dl_assignment_2.data.pipeline import Pipeline
+from dl_assignment_2.data.dataset_pipeline import BaseDatasetPipeline
+from dl_assignment_2.data.pipeline import BasePipeline, Pipeline
 from dl_assignment_2.data.config import TASK_TYPES
 
 from typing import Sequence, Optional
@@ -9,15 +10,18 @@ from torch import Tensor, tensor, accelerator, dtype, float32
 from numpy import ndarray, expand_dims, concatenate
 
 class CustomDataset(Dataset):
-    feature_tensor: Tensor # (N, sensors, T)
+    feature_tensor: Tensor # (number of samples (N), timepoints (T), sensors (C))
     label_vector: Tensor
     device: str
 
-    def __init__(self, segments: Sequence[DataSegment], pipeline: Optional[Pipeline] = None, device: Optional[str] = None, element_type: dtype = float32) -> None:
-        # 1. perform the transformations if you provide a pipeline:
-        if pipeline:
-            segments = [pipeline(segment) for segment in segments]
+    def __init__(self, segments: Sequence[DataSegment], dataset_pipeline: BaseDatasetPipeline, device: Optional[str] = None, element_type: dtype = float32) -> None:
+        # # 1. perform the transformations if you provide a pipeline:
+        # if pipeline:
+        #     segments = [pipeline(segment) for segment in segments]
 
+        # 1. perform the transformations if you provide a dataset pipeline:
+        if dataset_pipeline:
+            segments = dataset_pipeline(segments)
         
         # 2. set the device:
         if not device:

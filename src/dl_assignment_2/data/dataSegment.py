@@ -44,6 +44,19 @@ class DataSegment:
         self.shape = self.data.shape
         return None
     
+    def window(self, window_size: int, step_size: int) -> list["DataSegment"]:
+        """Splits the DataSegment into smaller segments of size window_size, with a step size of step_size."""
+        if window_size <= 0 or step_size <= 0:
+            raise ValueError("window_size and step_size must be positive integers.")
+        
+        segments: list[DataSegment] = []
+        for start in range(0, self.data.shape[1] - window_size + 1, step_size):
+            end = start + window_size
+            windowed_data = self.data[:, start:end]
+            segments.append(DataSegment(info=SegmentInfo(windowed_data, self.subject_id, self.task, self.segment)))
+        
+        return segments
+    
     def transform(self, transformation_function: Callable = lambda x: x*10**12) -> "DataSegment":
         """applies a transformation function to the data and returns a transformed DataSegment as a result."""
         data = transformation_function(self.data)

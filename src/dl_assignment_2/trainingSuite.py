@@ -1,4 +1,5 @@
 
+from dataclasses import dataclass
 from pathlib import Path
 import random
 
@@ -9,19 +10,38 @@ from torch.utils.data import DataLoader
 
 from dl_assignment_2.data.config import TASK_TYPES
 from dl_assignment_2.data.dataFolderReader import FolderDataReader
-from dl_assignment_2.data.pipeline import Pipeline
+from dl_assignment_2.data.dataset_pipeline import BaseDatasetPipeline
+from dl_assignment_2.data.pipeline import BasePipeline, Pipeline
 from dl_assignment_2.data.absPathProvider import AbsPathProvider as DataAbsPathProvider
 from dl_assignment_2.results.absPathProvider import AbsPathProvider as ResultsAbsPathProvider
 from dl_assignment_2.results.plots import plot_confusion_matrix
 from dl_assignment_2.modeling.dataset import CustomDataset
 from dl_assignment_2.modeling.trainer import TrainConfig, Trainer
 
+VALIDATION_SPLIT = 0.2  # 20% of the data will be used for validation
+
+@dataclass
+class SessionConfig:
+    """This class contains all the configuration parameters for a training session."""
+    # Data parameters
+    experiment: str
+    # do_windowing: bool
+    # window_size: int
+    # window_stride: int
+    pipeline: BaseDatasetPipeline
+    results_path: Path
+    device: str | None = None
+
+
 class TrainingSuite:
     """This class is responsible for training models on the training set, evaluating it on the validation set, and finally evaluating it on the test set."""
     experiment: str
-    pipeline: Pipeline
+    pipeline: BaseDatasetPipeline
     device: str
     results_path: Path
+    do_windowing: bool
+    window_size: int
+    window_stride: int
     
     _train_loader: DataLoader
     _valid_loader: DataLoader | None
@@ -29,39 +49,47 @@ class TrainingSuite:
     _data_path_provider: DataAbsPathProvider
     _results_path_provider: ResultsAbsPathProvider
 
-    def __init__(self, experiment: str, results_path: Path, data_pipeline: Pipeline = Pipeline(trim_n=8), device: str | None = None) -> None:
-        self.experiment = experiment
-        self.device = device or ("cuda" if cuda.is_available() else "cpu")
-        self.results_path = results_path
-        self.pipeline = data_pipeline
+    def __init__(self, session_config: SessionConfig) -> None:
+        self.start_new_session(session_config)
+
+    def start_new_session(self, session_config: SessionConfig) -> None:
+        """Starts a new training session with the given configuration."""
+        self.experiment = session_config.experiment
+        self.device = session_config.device or ("cuda" if cuda.is_available() else "cpu")
+        self.results_path = session_config.results_path
+        self.pipeline = session_config.pipeline
 
         # Path providers for data and results
         self._data_path_provider = DataAbsPathProvider()
-        self._results_path_provider = ResultsAbsPathProvider(results_path)
+        self._results_path_provider = ResultsAbsPathProvider(session_config.results_path)
 
         # Load the training and validation data
         self._load_train_data()
 
     def _load_train_data(self):
+        # load complete files as segments
         if self.experiment == "intra":
             reader = FolderDataReader(self._data_path_provider.get_intra_train_path())
         else:
-            reader = FolderDataReader(self._data_path_provider.get_cross_train_path())
+            reader = FolderDataReader(self._data_path_provider.get_cross_train_path()) 
 
-        rng = random.Random(0)
+        rng = random.Random(42)
         train_segments = []
         valid_segments = []
         for task in TASK_TYPES:
             task_segments = reader.get_data_for_specific_task(task)
+            # to avoid overlap between train and validation data due to windowing
+            # we only take segments every other window for validation, and the rest for training
+            #valid = task_segments[::2]  # Take every other segment for validation
+
             rng.shuffle(task_segments)
-            valid_segments.append(task_segments[0])
-            train_segments.extend(task_segments[1:4])
+            validation_size = max(1, int(VALIDATION_SPLIT * len(task_segments)))  # Ensure at least one segment for validation
+            
+            valid_segments.extend(task_segments[:validation_size])
+            train_segments.extend(task_segments[validation_size:])
 
-        rng.shuffle(train_segments)
-        rng.shuffle(valid_segments)
-
-        train_dataset = CustomDataset(train_segments, pipeline=self.pipeline, device=self.device)
-        valid_dataset = CustomDataset(valid_segments, pipeline=self.pipeline, device=self.device) if valid_segments else None
+        train_dataset = CustomDataset(train_segments, dataset_pipeline=self.pipeline, device=self.device)
+        valid_dataset = CustomDataset(valid_segments, dataset_pipeline=self.pipeline, device=self.device) if valid_segments else None
 
         self._train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
         self._valid_loader = DataLoader(valid_dataset, batch_size=8) if valid_dataset else None
@@ -133,9 +161,6 @@ class TrainingSuite:
 
         # plot training and validation metrics
         self._plot_training(trainer, show_plots, save_plots)
-
-        # # test set evaluation and plotting
-        # self._test_evaluation(model, show_plots, save_plots)
 
         # model saving
         if save_model:
