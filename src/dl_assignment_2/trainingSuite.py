@@ -24,7 +24,7 @@ class TrainingSuite:
     results_path: Path
     
     _train_loader: DataLoader
-    _valid_loader: DataLoader
+    _valid_loader: DataLoader | None
 
     _data_path_provider: DataAbsPathProvider
     _results_path_provider: ResultsAbsPathProvider
@@ -63,8 +63,8 @@ class TrainingSuite:
         train_dataset = CustomDataset(train_segments, pipeline=self.pipeline, device=self.device)
         valid_dataset = CustomDataset(valid_segments, pipeline=self.pipeline, device=self.device) if valid_segments else None
 
-        self.train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-        self.valid_loader = DataLoader(valid_dataset, batch_size=8) if valid_dataset else None
+        self._train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+        self._valid_loader = DataLoader(valid_dataset, batch_size=8) if valid_dataset else None
     
     def _plot_training(self, trainer: Trainer, show_plots: bool, save_plots: bool):
         """Plots all defined metrics and saves the plots if specified."""
@@ -108,11 +108,14 @@ class TrainingSuite:
         Trains the model on the training set and evaluates it on the validation set.
         """
         # instantiate the model with the correct input and output dimensions
-        c_in, seq_len = self.train_loader.dataset[0][0].shape 
-        model = model_type(c_in=c_in, c_out=len(TASK_TYPES), seq_len=seq_len).to(self.device)
+        T, C = self._train_loader.dataset[0][0].shape
+        print(f"Training {model_type.__name__} with input shape: (T={T}, C={C}) and output classes: {len(TASK_TYPES)}")
+        
+        #self._train_loader.dataset[0][0].shape 
+        model = model_type(c_in=C, c_out=len(TASK_TYPES), seq_len=T).to(self.device)
 
         # train the model
-        trainer = Trainer(model, self.train_loader, train_config, eval_data=self.valid_loader, device=self.device)
+        trainer = Trainer(model, self._train_loader, train_config, eval_data=self._valid_loader, device=self.device)
         trainer.train()
 
         # training and validation evaluation

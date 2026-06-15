@@ -116,8 +116,10 @@ class CNN1DResNet(nn.Module):
                     nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """x: (B, c_in, seq_len) -> logits: (B, c_out)"""
-        #x = x.transpose(1, 2)    # (B, c_in, seq_len) -> (B, seq_len, c_in)
+        """x: (batch, time, channels) -> logits: (batch, c_out)"""
+
+        x = x.permute(0, 2, 1)    # (B, T, C) -> (B, C, T)
+        
         x = self.input_proj(x)   # (B, 64,  200)
         x = self.res_blocks(x)   # (B, 256,  ~25) after pooling
         x = self.gap(x)          # (B, 256,    1)

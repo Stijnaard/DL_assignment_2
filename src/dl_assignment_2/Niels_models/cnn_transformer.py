@@ -151,8 +151,10 @@ class CNNTransformer(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, c_out)"""
-        #x = x.transpose(1, 2)          # (B, 6, 200)
+        """x: (B, T, C) -> logits: (B, c_out)"""
+        
+        x = x.permute(0, 2, 1)          # (B, T, C) -> (B, C, T)
+        
         x = self.cnn(x)                         # CNN: (B, 248, 200) -> (B, d_model, T_short)
         x = x.permute(0, 2, 1)                  # Reorder: (B, d_model, T) -> (B, T, d_model)  for Transformer
         x = self.pos_enc(x)                     # Add positional encoding

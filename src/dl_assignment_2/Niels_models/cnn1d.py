@@ -79,8 +79,10 @@ class CNN1DClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
-        #x = x.transpose(1, 2)          # (B, 6, 200)
+        """x: (batch, time, channels) -> logits: (batch, c_out)"""
+
+        x = x.permute(0, 2, 1)          # (B, T, C) -> (B, C, T)
+        
         x = self.input_sequential(x) # (B, 64,  200)
         x = self.conv_blocks(x)      # (B, 256,  25)
         x = self.gap(x)              # (B, 256,   1)

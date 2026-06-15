@@ -104,11 +104,13 @@ class TestingSuite:
 
     def test_model(self, model_type: type[nn.Module], metric_fns: list[Callable], show_plots: bool=False, save_plots: bool=False):
         """Evaluates the given model on the test set."""
-        c_in, seq_len = self._test_loaders[0].dataset[0][0].shape # hacky as hell way to do this, but it works
+        #c_in, seq_len = self._test_loaders[0].dataset[0][0].shape # hacky as hell way to do this, but it works
+        T, C = self._test_loaders[0].dataset[0][0].shape
+
 
         # Load the model if a path or model type is given
         model_load_path = self._results_path_provider.get_model_path(model_type, self.experiment)
-        model = model_type(c_in=c_in, c_out=len(TASK_TYPES), seq_len=seq_len).to(self.device)
+        model = model_type(c_in=C, c_out=len(TASK_TYPES), seq_len=T).to(self.device)
         model.load_state_dict(torch.load(model_load_path, map_location=self.device))
 
         # Evaluate the model and create plots

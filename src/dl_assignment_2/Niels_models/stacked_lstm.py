@@ -82,12 +82,17 @@ class StackedLSTM(nn.Module):
                     nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x : (batch, c_in, seq_len)
-        Returns logits : (batch, c_out)
-        """
-        # (B, C, T) -> (T, B, C) time-first for the LSTM
-        x = x.permute(2, 0, 1)               # (T, B, c_in)
+        # """
+        # x : (batch, c_in, seq_len)
+        # Returns logits : (batch, c_out)
+        # """
+        # print(f"Input shape: {x.shape} (B, C_in, T)")
+
+        # # (B, C, T) -> (T, B, C) time-first for the LSTM
+        # x = x.permute(2, 0, 1)               # (T, B, c_in)
+        """x : (batch, time, channels)"""
+        x = x.permute(1, 0, 2) # (T, B, C)
+
         T, B, C = x.shape
         # Project each time-step's sensor values independently
         x = self.input_proj(x.reshape(T * B, C)).reshape(T, B, -1)  # (T, B, hidden)

@@ -55,10 +55,9 @@ class RNNClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, N_CHANNELS, 200) -> logits: (batch, c_out)"""
-        # Reorder axes: (B, C, T) -> (T, B, C)  because RNN expects time-first
-        #x = x.transpose(1, 2)
-        x = x.permute(2, 0, 1) # (T, B, N_CHANNELS)
+        """x: (batch, timepoints, channels) -> logits: (batch, c_out)"""
+        
+        x = x.permute(1, 0, 2) # (T, B, C)
 
         # Project each time step's sensor values
         T, B, C = x.shape

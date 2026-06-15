@@ -89,8 +89,10 @@ class EEGNet(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
-        #x = x.transpose(1, 2)          # (B, c_in, seq_len) -> (B, seq_len, c_in)
+        """x: B, T, C -> logits: B, c_out"""
+        
+        x = x.permute(0, 2, 1)          # (B, T, C) -> (B, C, T)
+
         x = x.unsqueeze(1)   # (B, 1, c_in, seq_len) add channel dim for Conv2d
         x = self.block1(x)
         x = self.block2(x)

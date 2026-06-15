@@ -80,10 +80,10 @@ class GRUClassifier(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        """x: (batch, c_in, seq_len) -> logits: (batch, c_out)"""
-        # Reorder axes: (B, C, T) -> (T, B, C)  because RNN expects time-first
-        #x = x.transpose(1, 2) # (B, T, C)
-        x = x.permute(2, 0, 1)                                           # (T, B, c_in)
+        """x: (B, T, C) -> logits: (B, c_out)"""
+        
+        x = x.permute(1, 0, 2) # (T, B, C)
+        
         T, B, C = x.shape
         x = self.input_sequential(x.reshape(T * B, C)).reshape(T, B, -1) # (T, B, hidden)
         out, _ = self.gru(x)                                             # (T, B, out_size)
