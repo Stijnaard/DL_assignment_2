@@ -29,9 +29,13 @@ class CustomDataset(Dataset):
 
         # 2. get the data from the segments:
         matrices: list[ndarray] = [expand_dims(segment.get_data(), 0) for segment in segments]
+        print(f"Constructing CustomDataset with {len(matrices)} segments, each of shape {matrices[0].shape} (sensors, timepoints).")
         
         # 3. construct the full feature tensor
         self.feature_tensor: Tensor = tensor(concatenate(matrices, axis=0)).to(float32).transpose(1,2).to(device)
+
+        # check shape of feature tensor
+        print(f"Feature tensor shape: {self.feature_tensor.shape} (N, T, C).")
 
         # 4. construct the label vector:
         sorted_tasks = sorted(TASK_TYPES)
