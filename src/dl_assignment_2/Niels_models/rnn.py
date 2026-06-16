@@ -10,13 +10,13 @@ import torch.nn as nn
 from dl_assignment_2.Niels_models.config import *
 
 class RNNClassifier(nn.Module):
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = RNN_DROPOUT):
         super().__init__()
 
         n_channels    = c_in
         hidden        = RNN_HIDDEN
         n_layers      = RNN_LAYERS
-        dropout       = RNN_DROPOUT
+        dropout       = dropout
         bidirectional = RNN_BIDIR
 
         # 1. Spatial projection

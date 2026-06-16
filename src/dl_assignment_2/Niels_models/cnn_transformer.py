@@ -95,13 +95,13 @@ class AttentionPool(nn.Module):
 
 # Full Hybrid Model
 class CNNTransformer(nn.Module):
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = CNNTRANS_DROPOUT):
         super().__init__()
         d_model  = CNNTRANS_D_MODEL
         nhead    = CNNTRANS_NHEAD
         n_layers = CNNTRANS_LAYERS
         dim_ff   = CNNTRANS_DIM_FF
-        dropout  = CNNTRANS_DROPOUT
+        dropout  = dropout
 
         # 1. CNN frontend
         self.cnn = CNNFrontend(

@@ -29,11 +29,11 @@ class StackedLSTM(nn.Module):
     Input : (batch, c_in, seq_len)   — sensors x time
     Output: (batch, c_out)          — class logits
     """
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = STACKED_DROPOUT_RATE):
         super().__init__()
         hidden    = STACKED_HIDDEN_SIZE
         n_layers  = STACKED_NUM_LAYERS
-        dropout   = STACKED_DROPOUT_RATE
+        dropout   = dropout
 
         # 1. Spatial projection: compress N_CHANNELS sensors -> hidden features
         # Applied identically to every time step before the LSTM.

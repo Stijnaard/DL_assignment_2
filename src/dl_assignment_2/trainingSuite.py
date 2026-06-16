@@ -1,4 +1,5 @@
 
+from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
 import random
@@ -126,7 +127,8 @@ class TrainingSuite:
 
     def train_model(self, 
                     model_type: type[nn.Module], 
-                    train_config: TrainConfig, 
+                    train_config: TrainConfig,
+                    dropout: Optional[float] = None,
                     save_model: bool=False, 
                     show_plots: bool=False, 
                     save_plots: bool=False,
@@ -140,7 +142,7 @@ class TrainingSuite:
         print(f"Training {model_type.__name__} with input shape: (T={T}, C={C}) and output classes: {len(TASK_TYPES)}")
         
         #self._train_loader.dataset[0][0].shape 
-        model = model_type(c_in=C, c_out=len(TASK_TYPES), seq_len=T).to(self.device)
+        model = model_type(c_in=C, c_out=len(TASK_TYPES), seq_len=T, dropout=dropout).to(self.device)
 
         # train the model
         trainer = Trainer(model, self._train_loader, train_config, eval_data=self._valid_loader, device=self.device)

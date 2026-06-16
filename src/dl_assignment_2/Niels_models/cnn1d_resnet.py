@@ -66,11 +66,11 @@ class CNN1DResNet(nn.Module):
     Input : (batch, N_CHANNELS, 200)
     Output: (batch, 4)
     """
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = CNN1D_RN_DROPOUT):
         super().__init__()
         channels = CNN1D_RN_CHANNELS
         kernel   = CNN1D_RN_KERNEL
-        dropout  = CNN1D_RN_DROPOUT
+        dropout  = dropout
 
         # 1. Spatial projection: mix N_CHANNELS sensors into the first channel count
         self.input_proj = nn.Sequential(

@@ -32,12 +32,12 @@ class AttentionPool(nn.Module):
         return (weights * h).sum(dim = 0)               # (B, H)
 
 class GRUClassifier(nn.Module):
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = GRU_DROPOUT):
         super().__init__()
         n_channels    = c_in
         hidden        = GRU_HIDDEN
         n_layers      = GRU_LAYERS
-        dropout       = GRU_DROPOUT
+        dropout       = dropout
         bidirectional = GRU_BIDIR
 
         # 1. Spatial projection

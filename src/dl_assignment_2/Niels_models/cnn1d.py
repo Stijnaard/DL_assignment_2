@@ -35,11 +35,11 @@ class Conv1DBlock(nn.Module):
         return self.block(x)
 
 class CNN1DClassifier(nn.Module):
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = CNN1D_DROPOUT):
         super().__init__()
         channels = CNN1D_CHANNELS
         kernel   = CNN1D_KERNEL
-        dropout  = CNN1D_DROPOUT
+        dropout  = dropout
 
         # 1. Input projection (N_CHANNELS sensors -> first channel count)
         # Learned spatial filter over sensors

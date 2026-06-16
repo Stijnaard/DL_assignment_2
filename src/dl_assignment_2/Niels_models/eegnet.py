@@ -19,12 +19,13 @@ import torch.nn as nn
 from dl_assignment_2.Niels_models.config import *
 
 class EEGNet(nn.Module):
-    def __init__(self, c_in: int, c_out: int, seq_len: int):
+    def __init__(self, c_in: int, c_out: int, seq_len: int, dropout: float = EEGNET_DROPOUT):
         super().__init__()
 
         self.c_in = c_in
         self.c_out = c_out
         self.seq_len = seq_len
+        self.dropout = dropout
 
         # Block 1: Temporal Convolution
         # Input:  (B, 1, N_CHANNELS, 200)  treated as a single-channel "image"
@@ -49,7 +50,7 @@ class EEGNet(nn.Module):
             nn.BatchNorm2d(EEGNET_F2),
             nn.ELU(),
             nn.AvgPool2d(kernel_size = (1, 4)), # Reduce time dimension by 4x
-            nn.Dropout(EEGNET_DROPOUT))
+            nn.Dropout(self.dropout))
 
         # Block 3: Separable Convolution
         # Input:  (B, F2, 1, ~50)
@@ -62,7 +63,7 @@ class EEGNet(nn.Module):
             nn.BatchNorm2d(EEGNET_F2),
             nn.ELU(),
             nn.AvgPool2d(kernel_size = (1, 8)),
-            nn.Dropout(EEGNET_DROPOUT))
+            nn.Dropout(self.dropout))
         
         flat = self.flatting_size()
         self.head = nn.Linear(flat, self.c_out) # Classifier
