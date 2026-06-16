@@ -18,6 +18,8 @@ class TrainConfig:
     loss_func: type[nn.Module]
     optimizer: type
     learning_rate: float
+    weight_decay: float
+    label_smoothing: Optional[float] = None
 
 class Trainer:
     def __init__(self, model: nn.Module, data: DataLoader, config: TrainConfig, eval_data: Optional[DataLoader] = None, device: Optional[str] = None) -> None:
@@ -27,8 +29,8 @@ class Trainer:
         self.data   : DataLoader = data
         
         self.epochs     : int       = config.epochs
-        self.loss_func  : nn.Module = config.loss_func()
-        self.optimizer  : Optimizer = config.optimizer(self.model.parameters(), config.learning_rate)
+        self.loss_func  : nn.Module = config.loss_func(label_smoothing=config.label_smoothing) if config.label_smoothing else config.loss_func()
+        self.optimizer  : Optimizer = config.optimizer(self.model.parameters(), config.learning_rate, weight_decay=config.weight_decay)
         
         self.train_evaluator: Evaluator             = Evaluator(data)
         self.dev_evaluator  : Optional[Evaluator]   = Evaluator(eval_data) if eval_data else None
