@@ -17,7 +17,7 @@ if str(SRC) not in sys.path:
 from sklearn.metrics import accuracy_score
 from torch import cuda, nn, optim
 
-from dl_assignment_2.Casper_models.InceptionTime import InceptionTime
+from dl_assignment_2.Casper_models import InceptionTime
 from dl_assignment_2.Niels_models import StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet
 from dl_assignment_2.Stijn_models import MEG1DCNN3
 
@@ -50,7 +50,7 @@ class ExperimentConfig:
     dropout_rate: float = 0.3
 
 
-def run_experiment(config: ExperimentConfig):
+def run_experiment(config: ExperimentConfig, skip_existing: bool = True):
     # Set up the experiment based on the provided configuration
     print(f"Running experiment: {config.experiment_name}")
     print(f"Use windowing: {config.use_windowing}")
@@ -91,7 +91,16 @@ def run_experiment(config: ExperimentConfig):
     print(f"Training suite created with {training_suite._train_loader.dataset[0][0].shape} input shape and {len(training_suite._train_loader.dataset)} training samples.")
     print(f"Validation suite created with {training_suite._valid_loader.dataset[0][0].shape} input shape and {len(training_suite._valid_loader.dataset)} validation samples.")
     testing_suite = TestingSuite(session_config=session_config)
-    for model_cls in MODELS:
+    for model_cls in config.models:
+        # skip if results already exist
+        if skip_existing:
+            model_results_path = testing_suite.results_path / "plots" / model_cls.__name__ / "intra_val_accuracy.png"
+            if model_results_path.exists():
+                print(f"Skipping {model_cls.__name__} since results already exist at {model_results_path}")
+                continue
+            else:
+                print(f"No existing results found for {model_cls.__name__} at {model_results_path}, proceeding with training and testing.")
+
         print(f"Training {model_cls.__name__} on intra-subject data...")
         training_suite.train_model(model_type=model_cls, 
                                    train_config=train_config, 
@@ -114,7 +123,14 @@ def run_experiment(config: ExperimentConfig):
     # Training and testing on cross-subject data
     training_suite = TrainingSuite(session_config=session2_config)
     testing_suite = TestingSuite(session_config=session2_config)
-    for model_cls in MODELS:
+    for model_cls in config.models:
+        # skip if results already exist
+        if skip_existing:
+            model_results_path = testing_suite.results_path / "plots" / model_cls.__name__ / "cross_val_accuracy.png"
+            if model_results_path.exists():
+                print(f"Skipping {model_cls.__name__} since results already exist at {model_results_path}")
+                continue
+
         print(f"Training {model_cls.__name__} on cross-subject data...")
         training_suite.train_model(model_type=model_cls, 
                                    train_config=train_config, 
@@ -129,7 +145,7 @@ def run_experiment(config: ExperimentConfig):
                                  show_plots=False,
                                  save_plots=True)
     
-    testing_suite.compare_models(model_types=MODELS, show_plots=False, save_plots=True)
+    testing_suite.compare_models(model_types=config.models, show_plots=False, save_plots=True)
     
     testing_suite.compare_models_intra_vs_cross(model_types=MODELS, show_plots=False, save_plots=True)
 

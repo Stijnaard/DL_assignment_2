@@ -131,7 +131,11 @@ class TestingSuite:
         for model_type in model_types:
             # load metrics from the results folder
             metrics_path = self._results_path_provider.get_metric_path(model_type, experiment)
+            if not metrics_path.exists():
+                print(f"Metrics file for {model_type.__name__} does not exist at {metrics_path}. Skipping accuracy calculation.")
+                continue
             metrics = torch.load(metrics_path, map_location=self.device)
+            
             if experiment == "intra":
                 metric_names = [f"{accuracy_score.__name__}_test_1"]
             else:
