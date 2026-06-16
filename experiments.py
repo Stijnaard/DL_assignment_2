@@ -29,24 +29,12 @@ from dl_assignment_2.data.dataset_pipeline import WindowingPipeline, DatasetPipe
 
 
 # Base parameters
-MODELS: list[type[nn.Module]] = [StackedLSTM, CNN1DClassifier]
-
-# USE_WINDOWING: bool    = True
-# WINDOW_SIZE: int       = 512 
-# WINDOW_STRIDE: int     = WINDOW_SIZE #// 2
-# DOWNSAMPLE_FACTOR: int = 4
-
-# EPOCHS          = 40,
-# LOSS_FUNC       = nn.CrossEntropyLoss,
-# LABEL_SMOOTHING = None, #0.1
-# OPTIMIZER       = optim.AdamW,
-# LEARNING_RATE   = 0.0003, #3e-4,
-# WEIGHT_DECAY    = 5e-4, #1e-4
+MODELS: list[type[nn.Module]] = [MEG1DCNN3, CNN1DClassifier, CNN1DResNet, InceptionTime] #[StackedLSTM, RNNClassifier, GRUClassifier, EEGNet, CNN1DClassifier, CNNTransformer, CNN1DResNet, InceptionTime] #[StackedLSTM] #[CNN1DResNet] #, RNNClassifier]
 
 @dataclass
 class ExperimentConfig:
     experiment_name: str
-    models: list[type[nn.Module]] = field(default_factory=lambda: [StackedLSTM, CNN1DClassifier])
+    models: list[type[nn.Module]] = field(default_factory=lambda: MODELS)
     # Preprocessing parameters
     use_windowing: bool = True
     window_size: int = 512
@@ -118,7 +106,7 @@ def run_experiment(config: ExperimentConfig):
                                  show_plots=False,
                                  save_plots=True)
     
-    testing_suite.compare_models(model_types=MODELS, show_plots=True, save_plots=True)
+    testing_suite.compare_models(model_types=MODELS, show_plots=False, save_plots=True)
 
     session2_config = session_config
     session2_config.experiment = "cross"
@@ -141,9 +129,9 @@ def run_experiment(config: ExperimentConfig):
                                  show_plots=False,
                                  save_plots=True)
     
-    testing_suite.compare_models(model_types=MODELS, show_plots=True, save_plots=True)
+    testing_suite.compare_models(model_types=MODELS, show_plots=False, save_plots=True)
     
-    testing_suite.compare_models_intra_vs_cross(model_types=MODELS, show_plots=True, save_plots=True)
+    testing_suite.compare_models_intra_vs_cross(model_types=MODELS, show_plots=False, save_plots=True)
 
 
 
