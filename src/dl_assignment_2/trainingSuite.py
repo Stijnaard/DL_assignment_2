@@ -106,7 +106,7 @@ class TrainingSuite:
 
         # confusion matrix for validation set
         confusion_plot_path = self._results_path_provider.get_plot_path(type(trainer.model), self.experiment, "val_confusion_matrix")
-        trainer.evaluate(plot_confusion_matrix, show=show_plots, save_path=confusion_plot_path if save_plots else None)
+        trainer.evaluate(plot_confusion_matrix, model_name=type(trainer.model).__name__, experiment=self.experiment, show=show_plots, save_path=confusion_plot_path if save_plots else None)
 
     def _save_metrics(self, trainer: Trainer, model_type: type[nn.Module]):
         metrics_save_path = self._results_path_provider.get_metric_path(model_type, self.experiment)

@@ -62,6 +62,70 @@ def get_plot_style() -> None:
         "grid.linestyle":    "--",
         "figure.dpi":        150})
 
+
+# def plot_confusion_matrix(y_true: list[int], y_pred: list[int],
+#         model_name: str, experiment: str, normalize:  bool = True) -> np.ndarray:
+def plot_confusion_matrix(labels: Tensor, predicted_indices: Tensor, model_name: str, experiment: str, normalize: bool = False, show: bool = False, save_path:Optional[Path] = None):
+    """Heatmap of true vs predicted labels"""
+    get_plot_style()
+    cm = confusion_matrix(labels.cpu(), predicted_indices.cpu())
+
+    if normalize:
+        cm_plot      = cm.astype(float) / cm.sum(axis = 1, keepdims = True)
+        fmt          = "{:.2f}"
+        vmax         = 1.0
+        title_suffix = "(normalised)"
+    else:
+        cm_plot      = cm.astype(float)
+        fmt          = "{:d}"
+        vmax         = float(cm.max())
+        title_suffix = "(counts)"
+
+    n   = len(SHORT_LABELS)
+    fig, ax = plt.subplots(figsize = (7, 6))
+
+    # Colour grid
+    im = ax.imshow(cm_plot, interpolation = "nearest", cmap = "Blues",
+        vmin = 0, vmax = vmax, aspect = "auto")
+    fig.colorbar(im, ax = ax, fraction = 0.046, pad = 0.04)
+
+    # White cell borders
+    for i in range(n + 1):
+        ax.axhline(i - 0.5, color = "white", linewidth = 1.5)
+        ax.axvline(i - 0.5, color = "white", linewidth = 1.5)
+
+    # Annotate each cell
+    thresh = cm_plot.max() / 2.0
+    for row in range(n):
+        for col in range(n):
+            val   = cm_plot[row, col]
+            raw   = cm[row, col]
+            label = fmt.format(val if normalize else raw)
+            color = "white" if val > thresh else "black"
+            ax.text(col, row, label, ha = "center", va = "center",
+                fontsize = 13, color = color, fontweight = "bold")
+
+    ax.set_xticks(range(n))
+    ax.set_yticks(range(n))
+    ax.set_xticklabels(SHORT_LABELS, rotation = 25, ha = "right", fontsize = 12)
+    ax.set_yticklabels(SHORT_LABELS, fontsize = 12)
+    ax.set_xlabel("Predicted label", fontsize = 16, labelpad = 8)
+    ax.set_ylabel("True label",      fontsize = 16, labelpad = 8)
+    ax.set_title(
+        f"{model_name} - {experiment}-subject Confusion Matrix {title_suffix}",
+        fontsize = 16, fontweight = "bold", pad = 12)
+
+    fig.tight_layout()
+    #save_plot(fig, f"{model_name}_{experiment}_confusion")
+
+    if save_path:
+        plt.savefig(save_path)
+
+    if show:
+        plt.show()
+
+    return cm
+
 # 3. Model comparison bar chart
 def plot_comparison_bar(results: dict[str, dict[str, float]], experiment: str, show: bool = False, save_path: Optional[Path] = None) -> None:
     """

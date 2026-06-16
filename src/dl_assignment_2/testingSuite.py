@@ -68,7 +68,7 @@ class TestingSuite:
 
         # confusion matrix for test set:
         confusion_plot_path = self._results_path_provider.get_plot_path(type(model), self.experiment, f"test_{test_index}_confusion_matrix")
-        evaluator.get_metric(model, plot_confusion_matrix, show=show_plots, save_path=confusion_plot_path if save_plots else None)
+        evaluator.get_metric(model, plot_confusion_matrix, model_name=type(model).__name__, experiment=self.experiment, normalize=False, show=show_plots, save_path=confusion_plot_path if save_plots else None)
 
     def _test_evaluation(self, model: nn.Module, metric_fns: list[Callable], show_plots: bool, save_plots: bool) -> dict[str, float]:
         """Evaluates the model on the test set and plots the confusion matrix."""
